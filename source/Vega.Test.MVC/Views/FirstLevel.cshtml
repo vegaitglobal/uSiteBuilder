@@ -1,0 +1,21 @@
+﻿@inherits Vega.USiteBuilder.UmbracoTemplatePageBase<Vega.Test.Entities.DocumentTypes.FirstLevelDT>
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>FirstLevelView</title>
+</head>
+<body>
+    <div>
+        First Level View
+        <br />
+        Node name: @this.TypedModel.Name <br />
+        Property Value: @this.TypedModel.FirstLevelProp1
+    </div>
+</body>
+</html>
