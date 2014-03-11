@@ -1,4 +1,6 @@
 ﻿using Umbraco.Core;
+using Umbraco.Web.Mvc;
+using Vega.USiteBuilder.TemplateBuilder;
 
 namespace Vega.USiteBuilder
 {
@@ -22,7 +24,8 @@ namespace Vega.USiteBuilder
         /// <param name="umbracoApplication"></param>
         /// <param name="applicationContext"></param>
         public void OnApplicationStarting(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
-        {            
+        {
+            DefaultRenderMvcControllerResolver.Current.SetDefaultControllerType(typeof(TemplateBaseController));
         }
 
         /// <summary>

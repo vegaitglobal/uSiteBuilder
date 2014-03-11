@@ -122,6 +122,7 @@
     <Compile Include="TemplateBuilder\TemplateBase.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="TemplateBuilder\TemplateBaseController.cs" />
     <Compile Include="TemplateBuilder\TemplateManager.cs" />
     <Compile Include="TemplateBuilder\UmbracoTemplatePageBase.cs" />
     <Compile Include="Types\ICustomTypeConvertor.cs" />

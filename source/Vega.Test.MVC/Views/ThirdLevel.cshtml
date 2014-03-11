@@ -1,0 +1,20 @@
+﻿@inherits Vega.USiteBuilder.UmbracoTemplatePageBase<Vega.Test.Entities.DocumentTypes.ThirdLevelDT>
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>ThirdLevel</title>
+</head>
+<body>
+    <div>
+        Third Level View node name: @this.Model.Name
+        <br />
+        @this.Model.Property3
+    </div>
+</body>
+</html>
