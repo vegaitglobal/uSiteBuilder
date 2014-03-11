@@ -8,7 +8,7 @@ namespace Vega.USiteBuilder.MVC.Controllers
 {
     public class FirstLevelDTController : TemplateControllerBase<FirstLevelDT>
     {
-        public override ActionResult Index()
+        public override ActionResult Index(RenderModel model)
         {
             //Do some stuff here, then return the base method
             return CurrentTemplate(this.CurrentContent);
