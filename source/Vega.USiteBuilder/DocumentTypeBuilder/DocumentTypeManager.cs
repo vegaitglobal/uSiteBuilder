@@ -441,14 +441,18 @@ namespace Vega.USiteBuilder
             }
             else
             {
-                // if AllowedTemplates if null, use all generic templates                
-                foreach (Type typeTemplate in TemplateManager.GetAllTemplates(typeDocType))
+                // This functionality is not supported in MVC
+                if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.WebForms)
                 {
-                    ITemplate template = FileService.GetTemplate(typeTemplate.Name);
-
-                    if (template != null)
+                    // if AllowedTemplates if null, use all generic templates                
+                    foreach (Type typeTemplate in TemplateManager.GetAllTemplates(typeDocType))
                     {
-                        allowedTemplates.Add(template);
+                        ITemplate template = FileService.GetTemplate(typeTemplate.Name);
+
+                        if (template != null)
+                        {
+                            allowedTemplates.Add(template);
+                        }
                     }
                 }
             }
