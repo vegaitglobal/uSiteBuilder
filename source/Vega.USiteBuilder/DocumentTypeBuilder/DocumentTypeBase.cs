@@ -126,7 +126,7 @@ namespace Vega.USiteBuilder
         public IEnumerable<T> GetChildren<T>(bool deepGet)
             where T : DocumentTypeBase, new()
         {
-            return ContentHelper.GetChildren<T>(this.ParentId, deepGet);
+            return ContentHelper.GetChildren<T>(this.Id, deepGet);
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace Vega.USiteBuilder
         public IEnumerable<T> GetChildren<T>()
             where T : DocumentTypeBase, new()
         {
-            return ContentHelper.GetChildren<T>(this.ParentId);
+            return ContentHelper.GetChildren<T>(this.Id);
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace Vega.USiteBuilder
         /// </summary>
         public IEnumerable<DocumentTypeBase> GetChildren()
         {
-            return ContentHelper.GetChildren(this.ParentId);
+            return ContentHelper.GetChildren(this.Id);
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public IEnumerable<DocumentTypeBase> GetChildren(bool deepGet)
         {
-            return ContentHelper.GetChildren(this.ParentId);
+            return ContentHelper.GetChildren(this.Id);
         }
 
         /// <summary>

@@ -354,9 +354,12 @@ namespace Vega.USiteBuilder
         /// </returns>
         public static bool IsUmbraco606OrHigher()
         {
-            bool retVal = GetCurrentUmbracoVersion() >= new Version(1, 0, 4898, 0);
+            return GetCurrentUmbracoVersion() >= new Version(1, 0, 4898, 0);
+        }
 
-            return retVal;
+        public static bool IsUmbraco700OrHigher()
+        {
+            return GetCurrentUmbracoVersion() >= new Version(1, 0, 5073, 23298);
         }
 
         /// <summary>
@@ -367,9 +370,7 @@ namespace Vega.USiteBuilder
         /// </returns>
         public static bool IsUmbraco611OrHigher()
         {
-            bool retVal = GetCurrentUmbracoVersion() >= new Version(1, 0, 5021, 24868);
-
-            return retVal;
+            return GetCurrentUmbracoVersion() >= new Version(1, 0, 5021, 24868);
         }
 
         /// <summary>

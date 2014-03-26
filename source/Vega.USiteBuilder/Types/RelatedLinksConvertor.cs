@@ -6,6 +6,7 @@
     using System.Text;
     using System.Xml;
     using umbraco.presentation.nodeFactory;
+    using Newtonsoft.Json;
 
     //using umbraco.NodeFactory;
 
@@ -37,42 +38,49 @@
         public object ConvertValueWhenRead(object inputValue)
         {
             // example of input value: <links><link title="google" link="http://www.google.com" type="external" newwindow="0" /></links>
-            string inputXml = Convert.ToString(inputValue);
+            string inputString = Convert.ToString(inputValue);
             try
             {
                 List<RelatedLink> retVal = new List<RelatedLink>();
 
-                if (!string.IsNullOrEmpty(inputXml))
+                if (!string.IsNullOrEmpty(inputString))
                 {
-                    XmlDocument doc = new XmlDocument();
-                    doc.LoadXml((string)inputXml);
-
-                    foreach (XmlNode node in doc.SelectNodes("links/link"))
+                    if (!Util.IsUmbraco700OrHigher())
                     {
-                        RelatedLink rl = new RelatedLink();
-                        
-                        rl.Title = node.Attributes["title"].Value;
-                        rl.NewWindow = node.Attributes["newwindow"].Value == "0" ? false : true;
+                        XmlDocument doc = new XmlDocument();
+                        doc.LoadXml((string)inputString);
 
-                        switch (node.Attributes["type"].Value)
+                        foreach (XmlNode node in doc.SelectNodes("links/link"))
                         {
-                            case "external":
-                                rl.Type = RelatedLink.RelatedLinkType.External;
-                                rl.Url = node.Attributes["link"].Value;
-                                break;
-                            case "internal": // points to some node so Url is nodeid
-                                rl.Type = RelatedLink.RelatedLinkType.Internal;
-                                rl.RelatedNodeId = int.Parse(node.Attributes["link"].Value);
-                                rl.Url = new Node((int)rl.RelatedNodeId).NiceUrl;
-                                break;
-                            case "media":
-                                rl.Type = RelatedLink.RelatedLinkType.Media;
-                                rl.RelatedNodeId = int.Parse(node.Attributes["link"].Value);
-                                rl.Url = Util.GetMediaUrlById((int)rl.RelatedNodeId);
-                                break;
-                        }
+                            RelatedLink rl = new RelatedLink();
 
-                        retVal.Add(rl);
+                            rl.Title = node.Attributes["title"].Value;
+                            rl.NewWindow = node.Attributes["newwindow"].Value == "0" ? false : true;
+
+                            switch (node.Attributes["type"].Value)
+                            {
+                                case "external":
+                                    rl.Type = RelatedLink.RelatedLinkType.External;
+                                    rl.Url = node.Attributes["link"].Value;
+                                    break;
+                                case "internal": // points to some node so Url is nodeid
+                                    rl.Type = RelatedLink.RelatedLinkType.Internal;
+                                    rl.RelatedNodeId = int.Parse(node.Attributes["link"].Value);
+                                    rl.Url = new Node((int)rl.RelatedNodeId).NiceUrl;
+                                    break;
+                                case "media":
+                                    rl.Type = RelatedLink.RelatedLinkType.Media;
+                                    rl.RelatedNodeId = int.Parse(node.Attributes["link"].Value);
+                                    rl.Url = Util.GetMediaUrlById((int)rl.RelatedNodeId);
+                                    break;
+                            }
+
+                            retVal.Add(rl);
+                        }
+                    }
+                    else
+                    {
+                        retVal = (List<RelatedLink>)JsonConvert.DeserializeObject<List<RelatedLink>>(inputString);
                     }
                 }
 
@@ -81,7 +89,7 @@
             catch (Exception exc)
             {
                 throw new Exception(string.Format("Cannot convert '{0}' to List<RelatedLink>. Error: {1}",
-                    inputXml, exc.Message));
+                    inputString, exc.Message));
             }
         }
 
