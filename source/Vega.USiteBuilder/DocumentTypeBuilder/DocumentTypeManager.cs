@@ -1,19 +1,20 @@
-﻿using Umbraco.Core.Events;
-using umbraco.DataLayer;
+﻿using umbraco.DataLayer;
+using Umbraco.Core.Events;
 
 namespace Vega.USiteBuilder
 {
     using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
-    using System.Collections.Generic;
+    using System.Text.RegularExpressions;
 
     using Umbraco.Core;
     using Umbraco.Core.Models;
     using Umbraco.Core.Services;
-    using umbraco.cms.businesslogic.web;
+
     using Vega.USiteBuilder.DocumentTypeBuilder;
-    using System.Diagnostics;
 
     /// <summary>
     /// Manages document types synchronization
@@ -441,10 +442,9 @@ namespace Vega.USiteBuilder
             }
             else
             {
-                // This functionality is not supported in MVC
                 if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.WebForms)
                 {
-                    // if AllowedTemplates if null, use all generic templates                
+                    // if AllowedTemplates is null, use all generic templates
                     foreach (Type typeTemplate in TemplateManager.GetAllTemplates(typeDocType))
                     {
                         ITemplate template = FileService.GetTemplate(typeTemplate.Name);
@@ -452,6 +452,18 @@ namespace Vega.USiteBuilder
                         if (template != null)
                         {
                             allowedTemplates.Add(template);
+                        }
+                    }
+                }
+                else if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.Mvc)
+                {
+                    // if AllowedTemplates is null, use all generic templates
+                    foreach (ITemplate template in FileService.GetTemplates())
+                    {
+                        if (IsViewForDocumentType(typeDocType.Name, template.Content))
+                        {
+                            allowedTemplates.Add(template);
+                            break;
                         }
                     }
                 }
@@ -639,6 +651,27 @@ namespace Vega.USiteBuilder
                     ContentTypeService.Save(contentType);
                 }
             }
+        }
+
+        private static bool IsViewForDocumentType(string typeName, string templateCode)
+        {
+            bool retVal = false;
+            var match = Regex.Match(templateCode, @"UmbracoTemplatePageBase\s*\<\s*(.*)\s*\>");
+            if (match.Success)
+            {
+                string templateTypeName = match.Groups[1].Value;
+                string[] nameSplitArray = templateTypeName.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                if (nameSplitArray.Length > 0)
+                {
+                    templateTypeName = nameSplitArray.Last();
+                    if (!string.IsNullOrEmpty(templateTypeName) && templateTypeName == typeName)
+                    {
+                        retVal = true;
+                    }
+                }
+            }
+
+            return retVal;
         }
 
         public static void DeleteDocumentType(string alias)
