@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>uSiteBuilder</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://raw.githubusercontent.com/spopovic/uSiteBuilder/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/spopovic/uSiteBuilder</projectUrl>
+    <iconUrl>http://www.vegaitsourcing.rs/downloads/nuget/vega-star.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <summary>Our objective is to enable back-end developers to adhere to the .NET standards with minimal external interaction, and to facilitate the automation of their deployments.</summary>
+    <releaseNotes>Please visit http://www.vegaitsourcing.rs/#!/articles/2014/03/usitebuilder-v2-release-notes to view the release notes.</releaseNotes>
+    <copyright>© Vega IT Sourcing DOO. All rights reserved.</copyright>
+    <tags>VegaIT uSiteBuilder Umbraco CMS ASP.NET</tags>
+  </metadata>
+</package>

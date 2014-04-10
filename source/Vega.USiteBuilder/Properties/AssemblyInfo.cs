@@ -1,14 +1,13 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Vega.USiteBuilder")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Vega uSiteBuilder")]
+[assembly: AssemblyDescription("Vega IT’s uSitebuilder is an open source (LPGL) framework created for .NET developers to accelerate and streamline their Umbraco based development projects.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Vega IT Sourcing")]
+[assembly: AssemblyCompany("VegaIT")]
 [assembly: AssemblyProduct("Vega.USiteBuilder")]
 [assembly: AssemblyCopyright("Copyright © Vega IT Sourcing DOO 2011")]
 [assembly: AssemblyTrademark("")]
