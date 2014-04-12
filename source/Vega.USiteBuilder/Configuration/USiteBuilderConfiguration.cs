@@ -28,6 +28,24 @@
         }
 
         /// <summary>
+        /// Get setting whether we should enable Umbraco MVC default controller
+        /// </summary>
+        public static bool EnableDefaultControllerType
+        {
+            get
+            {
+                bool retVal;
+                if (!Boolean.TryParse(ConfigurationManager.AppSettings["siteBuilderEnableDefaultControllerType"], out retVal))
+                {
+                    retVal = true;
+                }
+
+                return retVal;
+            }
+        }
+
+
+        /// <summary>
         /// Get's username of umbraco user whose account is used with Umbraco API
         /// </summary>
         public static bool SuppressSynchronization
