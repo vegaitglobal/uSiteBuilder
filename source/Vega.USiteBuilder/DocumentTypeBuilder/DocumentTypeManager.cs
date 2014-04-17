@@ -319,30 +319,7 @@ namespace Vega.USiteBuilder
                 // Existing DT
                 if (contentType.ParentId != parentId)
                 {
-                    IContentType newContentType = null;
-                    IContentType originalContentType = null;
-
-                    if (parentId != -1)
-                    {
-                        newContentType = ContentTypeService.GetContentType(parentId);
-                    }
-
-                    if (contentType.ParentId != -1)
-                    {
-                        originalContentType = ContentTypeService.GetContentType(contentType.ParentId);
-                    }
-
-                    if (originalContentType != null)
-                    {
-                        contentType.RemoveContentType(originalContentType.Alias);
-                    }
-
-                    if (newContentType != null)
-                    {
-                        contentType.AddContentType(newContentType);
-                    }
-
-                    contentType.ParentId = parentId;
+                    throw new Exception(string.Format("Document type inheritance for document type with '{0}' alias, cannot be updated.", docTypeAlias));
                 }
             }
 
