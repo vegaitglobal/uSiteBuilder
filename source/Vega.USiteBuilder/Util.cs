@@ -59,13 +59,12 @@ namespace Vega.USiteBuilder
                         types = module.GetTypes();
                         _types.AddRange(types);
                     }
-                    catch 
+                    catch
                     {
                         //TODO: add logging/exception handling
                     } // required because Exception is thrown for some dlls when .GetTypes method is called
                 }
             }
-
         }
 
         /// <summary>
@@ -137,7 +136,7 @@ namespace Vega.USiteBuilder
             return retVal;
         }
 
-        private static Assembly[] GetSiteBuilderAssemblies()
+        private static IEnumerable<Assembly> GetSiteBuilderAssemblies()
         {
             if (USiteBuilderConfiguration.Assemblies != "")
             {
@@ -153,12 +152,40 @@ namespace Vega.USiteBuilder
 
                 result.Add(Assembly.GetExecutingAssembly());
 
-                return result.ToArray();
+                return result;
             }
             else
+            {
+                // Enforcing loading of assemblies from bin folder because they are not all loaded when uSiteBuilder needs them.
+                LoadAssembliesFromBinFolder();
+
                 return AppDomain.CurrentDomain.GetAssemblies();
+            }
         }
 
+        private static void LoadAssembliesFromBinFolder()
+        {
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
+            List<string> loadedPaths = new List<string>();
+            foreach (Assembly assembly in loadedAssemblies)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(assembly.Location))
+                    {
+                        loadedPaths.Add(assembly.Location);
+                    }
+                }
+                catch
+                {
+                    // Do nothing, just catch the not supported exception and continue.
+                }
+            }
+
+            var referencedPaths = Directory.GetFiles(Path.Combine(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin")), "*.dll");
+            var toLoad = referencedPaths.Where(r => !loadedPaths.Contains(r, StringComparer.InvariantCultureIgnoreCase)).ToList();
+            toLoad.ForEach(path => AppDomain.CurrentDomain.Load(AssemblyName.GetAssemblyName(path)));
+        }
 
         /// <summary>
         /// Returns login name of Umbraco user used by USiteBuilder (for creating document types, templates etc...)
