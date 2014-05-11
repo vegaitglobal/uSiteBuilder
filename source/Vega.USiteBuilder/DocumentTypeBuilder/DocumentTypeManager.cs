@@ -134,17 +134,22 @@ namespace Vega.USiteBuilder
         public static string GetDocumentTypeAlias(Type typeDocType)
         {
             string alias;
+            bool aliasUsed = false;
 
             DocumentTypeAttribute docTypeAttr = GetDocumentTypeAttribute(typeDocType);
 
             if (!String.IsNullOrEmpty(docTypeAttr.Alias))
             {
                 alias = docTypeAttr.Alias;
+                aliasUsed = true;
             }
             else
             {
                 alias = typeDocType.Name;
             }
+
+            if (alias.ToLower() != alias.ToSafeAlias().ToLower())
+                throw new ArgumentException(string.Format("The {0} '{1}', for the document type '{2}', is invalid.", (aliasUsed ? "alias" : "name"), alias, typeDocType.Name), "Alias");
 
             return alias;
         }
