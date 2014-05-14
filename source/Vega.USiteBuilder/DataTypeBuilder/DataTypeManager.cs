@@ -83,11 +83,15 @@
 				if (prevalues.Any())
 				{
 					var settingsStorage = new DataEditorSettingsStorage();
-                    
-                    // updating all settings to those defined in datatype class
-                    // If you've exported, all settings will be defined here anyway?
-                    settingsStorage.ClearSettings(dtd.Id);
-                    settingsStorage.InsertSettings(dtd.Id, prevalues.Select(pre => new Setting<string, string> { Key = pre.Alias, Value = pre.Value }).ToList());
+
+                    // Check if there are settings already defined for data type. If there are, skip this step.
+                    List<Setting<string, string>> availableSettings = settingsStorage.GetSettings(dtd.Id);
+                    if (availableSettings == null || availableSettings.Count == 0)
+                    {
+                        // updating all settings to those defined in datatype class
+                        // If you've exported, all settings will be defined here anyway?
+                        settingsStorage.InsertSettings(dtd.Id, prevalues.Select(pre => new Setting<string, string> { Key = pre.Alias, Value = pre.Value }).ToList());
+                    }
 				}
 			}
 		}
