@@ -510,7 +510,7 @@ namespace Vega.USiteBuilder
             foreach (PropertyInfo propInfo in typeDocType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
-                if (propAttr == null || (propInfo.GetGetMethod() != null && propInfo.GetGetMethod().IsVirtual))
+                if (propAttr == null || (propInfo.GetGetMethod() != null && propInfo.GetGetMethod().IsVirtual && !propInfo.GetGetMethod().IsFinal))
                 {
                     continue; // skip this property - not part of a Document Type or is virtual in which case value will be intercepted
                 }
