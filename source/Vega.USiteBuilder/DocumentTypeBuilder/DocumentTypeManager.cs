@@ -242,7 +242,17 @@ namespace Vega.USiteBuilder
             foreach (Type typeDocType in Util.GetFirstLevelSubTypes(baseTypeDocType))
             {
                 string docTypeAlias = GetDocumentTypeAlias(typeDocType);
-                DocumentTypes.Add(docTypeAlias, typeDocType);
+
+                // Prevent "An item with the same key has already been added."
+                if (DocumentTypes.ContainsKey(docTypeAlias))
+                {
+                    // Reassign the value.
+                    DocumentTypes[docTypeAlias] = typeDocType;
+                }
+                else
+                {
+                    DocumentTypes.Add(docTypeAlias, typeDocType);
+                }
 
                 // create all children document types
                 FillDocumentTypes(typeDocType);
