@@ -157,40 +157,45 @@ namespace Vega.USiteBuilder
                     }
                 }
 
-                // Setting up the tab of this property. If tab doesn't exists, create it.
-                if (!string.IsNullOrEmpty(propAttr.TabAsString) && propAttr.TabAsString.ToLower() != DocumentTypeDefaultValues.TabGenericProperties.ToLower())
+                // If propertyType is still null, skip it. It means it cannot be added and is probably present in a parent content type.
+                // Reason for inability to create the propertyType must be resolved manually.
+                if (propertyType != null)
                 {
-                    // try to find this tab
-                    PropertyGroup pg = contentType.PropertyGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
-                    if (pg == null) // if found
+                    // Setting up the tab of this property. If tab doesn't exists, create it.
+                    if (!string.IsNullOrEmpty(propAttr.TabAsString) && propAttr.TabAsString.ToLower() != DocumentTypeDefaultValues.TabGenericProperties.ToLower())
                     {
-                        contentType.AddPropertyGroup(propAttr.TabAsString);
-                        pg = contentType.PropertyGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
+                        // try to find this tab
+                        PropertyGroup pg = contentType.PropertyGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
+                        if (pg == null) // if found
+                        {
+                            contentType.AddPropertyGroup(propAttr.TabAsString);
+                            pg = contentType.PropertyGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
+                        }
+
+                        if (propAttr.TabOrder.HasValue)
+                        {
+                            pg.SortOrder = propAttr.TabOrder.Value;
+                        }
+
+                        if (!pg.PropertyTypes.Any(x => x.Alias == propertyType.Alias))
+                        {
+                            contentType.MovePropertyType(propertyType.Alias, propAttr.TabAsString);
+                        }
+                    }
+                    else if ((propAttr.TabAsString == string.Empty) || (propAttr.TabAsString.ToLower() == "generic properties"))
+                    {
+                        // In case when some property exists and needs to be moved to "Generic Properties" tab
+                        contentType.MovePropertyType(propertyType.Alias, null);
                     }
 
-                    if (propAttr.TabOrder.HasValue)
-                    {
-                        pg.SortOrder = propAttr.TabOrder.Value;
-                    }
+                    propertyType.Name = propertyName;
+                    propertyType.Mandatory = propAttr.Mandatory;
+                    propertyType.ValidationRegExp = propAttr.ValidationRegExp;
+                    propertyType.Description = propAttr.Description;
+                    propertyType.SortOrder = propertySortOrder;
 
-                    if (!pg.PropertyTypes.Any(x => x.Alias == propertyType.Alias))
-                    {
-                        contentType.MovePropertyType(propertyType.Alias, propAttr.TabAsString);
-                    }
+                    propertySortOrder++;
                 }
-                else if ((propAttr.TabAsString == string.Empty) || (propAttr.TabAsString.ToLower() == "generic properties"))
-                {
-                    // In case when some property exists and needs to be moved to "Generic Properties" tab
-                    contentType.MovePropertyType(propertyType.Alias, null);                    
-                }
-
-                propertyType.Name = propertyName;
-                propertyType.Mandatory = propAttr.Mandatory;
-                propertyType.ValidationRegExp = propAttr.ValidationRegExp;
-                propertyType.Description = propAttr.Description;
-                propertyType.SortOrder = propertySortOrder;
-
-                propertySortOrder++;
             }
         }
 
