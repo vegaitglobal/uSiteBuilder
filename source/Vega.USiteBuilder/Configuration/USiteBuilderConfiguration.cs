@@ -11,23 +11,6 @@
         private static bool? _isSuppressed = null;
 
         /// <summary>
-        /// Get's username of umbraco user whose account is used with Umbraco API
-        /// </summary>
-        public static string ApiUser
-        {
-            get
-            {
-                string retVal = ConfigurationManager.AppSettings["siteBuilderUserLoginName"];
-
-                if (String.IsNullOrEmpty(retVal))
-                {
-                    retVal = "admin";
-                }
-                return retVal;
-            }
-        }
-
-        /// <summary>
         /// Get setting whether we should enable Umbraco MVC default controller
         /// </summary>
         public static bool EnableDefaultControllerType

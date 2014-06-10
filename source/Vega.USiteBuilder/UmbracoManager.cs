@@ -50,10 +50,10 @@ namespace Vega.USiteBuilder
                 result = false;
             }
 
-            // Check if Umbraco version is greater than or equal to 6.1.1
-            if (Util.IsUmbraco611OrHigher() == false)
+            // Check if Umbraco version is greater than or equal to 6.1.6
+            if (Util.IsUmbraco616OrHigher() == false)
             {
-                throw new Exception("Current umbraco version is not supported. Only v6.1.1 and above are supported.");
+                throw new Exception("Current umbraco version is not supported. Only v6.1.6 and above are supported.");
             }
 
 

@@ -188,23 +188,6 @@ namespace Vega.USiteBuilder
         }
 
         /// <summary>
-        /// Returns login name of Umbraco user used by USiteBuilder (for creating document types, templates etc...)
-        /// </summary>
-        public static User GetSiteBuilderUmbracoUser()
-        {
-            // user admin user
-            User[] users = User.getAllByLoginName(USiteBuilderConfiguration.ApiUser);
-
-            if (users.Length != 1)
-            {
-                throw new Exception(string.Format("Umbraco user used by USiteBuilder ('{0}') is not found in Umbraco. Please check your web.config (Add <add key=\"siteBuilderUserLoginName\" value=\"someumbracoadminusername\" /> to <appSettings> in web.config).",
-                    USiteBuilderConfiguration.ApiUser));
-            }
-
-            return users[0];
-        }
-
-        /// <summary>
         /// Get's the attribute of a given type from the given type.
         /// Note that if there are multiple attributes of the same type found, this method returns on the first one
         /// so use this method only for searching attributes whose AllowMultiple is set to false.
@@ -285,7 +268,13 @@ namespace Vega.USiteBuilder
         {
             try
             {
-                return User.GetUser(0);
+                User adminUser = User.GetUser(0);
+                if (adminUser == null)
+                {
+                    adminUser = User.getAll().FirstOrDefault(u=>u.IsAdmin());
+                }
+
+                return adminUser;
             }
             catch (Exception)
             {
@@ -390,12 +379,12 @@ namespace Vega.USiteBuilder
         }
 
         /// <summary>
-        /// Determines whether current instance of Umbraco is of version 6.1.1 or higher
+        /// Determines whether current instance of Umbraco is of version 6.1.6 or higher
         /// </summary>
         /// <returns>
-        /// 	<c>true</c> if current Umbraco instance is v6.1.1 or higher; otherwise, <c>false</c>.
+        /// 	<c>true</c> if current Umbraco instance is v6.1.6 or higher; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsUmbraco611OrHigher()
+        public static bool IsUmbraco616OrHigher()
         {
             return GetCurrentUmbracoVersion() >= new Version(1, 0, 5021, 24868);
         }

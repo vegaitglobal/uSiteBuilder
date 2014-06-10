@@ -455,7 +455,6 @@ namespace Vega.USiteBuilder
                         if (IsViewForDocumentType(typeDocType.Name, template.Content))
                         {
                             allowedTemplates.Add(template);
-                            break;
                         }
                     }
                 }

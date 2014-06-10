@@ -18,7 +18,7 @@ namespace Vega.USiteBuilder
     /// </summary>
     internal class ManagerBase
     {
-        protected User siteBuilderUser = Util.GetSiteBuilderUmbracoUser();
+        protected User siteBuilderUser = Util.GetAdminUser();
         static readonly IContentTypeService ContentTypeService = ApplicationContext.Current.Services.ContentTypeService;
 
         // string = name, Type = synchronized type
