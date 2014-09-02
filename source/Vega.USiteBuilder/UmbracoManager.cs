@@ -1,9 +1,13 @@
 ﻿
+using Vega.USiteBuilder.DataTypeBuilder;
+using Vega.USiteBuilder.DocumentTypeBuilder;
+using Vega.USiteBuilder.TemplateBuilder;
+
 namespace Vega.USiteBuilder
 {
     using System;
     using System.Collections.Generic;
-    using Vega.USiteBuilder.Types;
+    using Types;
     using System.Diagnostics;
 
     /// <summary>
@@ -82,9 +86,23 @@ namespace Vega.USiteBuilder
             RegisterConvertors();
         }
 
+        public static List<ContentComparison> PreviewDocumentTypeChanges()
+        {
+            bool hasDefaultValues;
+            return DocumentTypeComparer.PreviewDocumentTypeChanges(out hasDefaultValues);
+        }
 
+        public static List<ContentComparison> PreviewTemplateChanges()
+        {
+            return new TemplateComparer().PreviewTemplateChanges();
+        }
 
-        private static void SynchronizeTemplates()
+        public static List<ContentComparison> PreviewDataTypeChanges()
+        {
+            return new DataTypeComparer().PreviewDataTypeChanges();
+        }
+
+        public static void SynchronizeTemplates()
         {
 #if DEBUG
             Stopwatch timer = new Stopwatch();
@@ -101,7 +119,7 @@ namespace Vega.USiteBuilder
 #endif
         }
 
-        private static void SynchronizeDataTypes()
+        public static void SynchronizeDataTypes()
         {
 #if DEBUG
             Stopwatch timer = new Stopwatch();
@@ -118,7 +136,7 @@ namespace Vega.USiteBuilder
 #endif        
         }
 
-        private static void SynchronizeDocumentTypes()
+        public static void SynchronizeDocumentTypes()
         {
 #if DEBUG
             Stopwatch timer = new Stopwatch();
@@ -134,7 +152,7 @@ namespace Vega.USiteBuilder
 #endif
         }
 
-        private static void SynchronizeMemberTypes()
+        public static void SynchronizeMemberTypes()
         {
 #if DEBUG
             Stopwatch timer = new Stopwatch();
@@ -150,7 +168,7 @@ namespace Vega.USiteBuilder
 #endif        
         }
 
-        private static void SynchronizeUserControls()
+        public static void SynchronizeUserControls()
         {
 #if DEBUG
             Stopwatch timer = new Stopwatch();

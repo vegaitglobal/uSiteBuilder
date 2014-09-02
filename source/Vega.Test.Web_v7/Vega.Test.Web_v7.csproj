@@ -73,6 +73,7 @@
   <ItemGroup>
     <Compile Include="Masterpages\FirstLevel.Master.cs">
       <DependentUpon>FirstLevel.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Masterpages\FirstLevel.Master.designer.cs">
       <DependentUpon>FirstLevel.Master</DependentUpon>

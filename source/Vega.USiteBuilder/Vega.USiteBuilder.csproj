@@ -84,6 +84,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataTypeBuilder\DataTypeComparer.cs" />
     <Compile Include="DocumentTypeBuilder\Activation\DocumentTypeActivator.cs" />
     <Compile Include="DocumentTypeBuilder\Activation\DocumentTypePropertiesProxyGenerationHook.cs" />
     <Compile Include="DocumentTypeBuilder\Activation\DocumentTypePropertyInterceptor.cs" />
@@ -126,6 +127,7 @@
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="TemplateBuilder\TemplateBaseController.cs" />
+    <Compile Include="TemplateBuilder\TemplateComparer.cs" />
     <Compile Include="TemplateBuilder\TemplateManager.cs" />
     <Compile Include="TemplateBuilder\UmbracoTemplatePageBase.cs" />
     <Compile Include="Types\ICustomTypeConvertor.cs" />
