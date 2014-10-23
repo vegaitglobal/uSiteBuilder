@@ -4,7 +4,7 @@ using umbraco.NodeFactory;
 
 namespace Vega.USiteBuilder
 {
-    internal class DocumentTypeResolver
+    public class DocumentTypeResolver
     {
         private static DocumentTypeResolver _instance;
 
