@@ -49,7 +49,7 @@ namespace Vega.USiteBuilder
         {
             return DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(Node.GetCurrent());
         }
-
+        
         /// <summary>
         /// Gets all children nodes of a given type from a given node id.
         /// </summary>
@@ -342,7 +342,13 @@ namespace Vega.USiteBuilder
         /// <param name="publish">If set to <c>true</c> it contentItem will be published as well.</param>
         public static void Save(DocumentTypeBase contentItem, bool publish)
         {
-            ContentHelper.Save(contentItem, Util.GetAdminUser(), publish);
+            var adminUser = Util.GetAdminUser();
+            if (adminUser == null)
+            {
+                throw new InvalidOperationException("no admin user found");
+            }
+
+            Save(contentItem, adminUser, publish);
         }
 
         /// <summary>
@@ -353,7 +359,7 @@ namespace Vega.USiteBuilder
         /// <param name="contentItem">Content item to update/add</param>
         public static void Save(DocumentTypeBase contentItem)
         {
-            ContentHelper.Save(contentItem, Util.GetAdminUser(), true);
+            Save(contentItem, true);
         }
 
         /// <summary>
@@ -368,9 +374,22 @@ namespace Vega.USiteBuilder
         {
             if (user == null)
             {
-                throw new Exception("User cannot be null");
+                throw new ArgumentException("User cannot be null");
             }
 
+            Save(contentItem, user.Id, publish);
+        }
+
+        /// <summary>
+        /// Updates or adds the content item. If content item already exists, it updates it. 
+        /// If content item doesn't exists, it creates new content item (in that case contentItem.Id will be set to newly created id).
+        /// NOTE: Set the ParentId property of this item.
+        /// </summary>
+        /// <param name="contentItem">Content item to update/add</param>
+        /// <param name="userId">User used for add or updating the content</param>
+        /// <param name="publish">If set to <c>true</c> it contentItem will be published as well.</param>
+        public static void Save(DocumentTypeBase contentItem, int userId, bool publish)
+        {
             if (contentItem.ParentId < 1)
             {
                 throw new ArgumentException("Parent property cannot be null");
@@ -431,7 +450,7 @@ namespace Vega.USiteBuilder
 
             if (publish)
             {
-                ContentService.SaveAndPublish(content);
+                ContentService.SaveAndPublish(content, userId);
                 contentItem.Id = content.Id;
             }
         }
