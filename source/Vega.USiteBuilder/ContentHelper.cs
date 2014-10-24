@@ -14,6 +14,7 @@ using Umbraco.Core.Models;
 using Umbraco.Core.Services;
 
 using Vega.USiteBuilder.Types;
+using Activator = Vega.USiteBuilder.Types.Activation.Activator;
 
 namespace Vega.USiteBuilder
 {
@@ -233,7 +234,7 @@ namespace Vega.USiteBuilder
             }
             else if (propAttr.CustomTypeConverter != null)
             {
-                value = ((ICustomTypeConvertor)Activator.CreateInstance(propAttr.CustomTypeConverter)).ConvertValueWhenRead(property.Value);
+                value = ((ICustomTypeConvertor)Activator.Current.GetInstance(propAttr.CustomTypeConverter)).ConvertValueWhenRead(property.Value);
             }
             else if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
             {

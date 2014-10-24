@@ -197,7 +197,7 @@ namespace Vega.USiteBuilder
 
             foreach (Type convertorType in convertorTypes)
             {
-                ICustomTypeConvertor convertor = (ICustomTypeConvertor)Activator.CreateInstance(convertorType);
+                ICustomTypeConvertor convertor = (ICustomTypeConvertor) Types.Activation.Activator.Current.GetInstance(convertorType);
 
                 ContentHelper.RegisterDocumentTypePropertyConvertor(convertor.ConvertType, convertor);
             }

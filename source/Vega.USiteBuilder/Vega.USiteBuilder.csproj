@@ -130,6 +130,10 @@
     <Compile Include="TemplateBuilder\TemplateComparer.cs" />
     <Compile Include="TemplateBuilder\TemplateManager.cs" />
     <Compile Include="TemplateBuilder\UmbracoTemplatePageBase.cs" />
+    <Compile Include="Types\Activation\Activator.cs" />
+    <Compile Include="Types\Activation\IActivator.cs" />
+    <Compile Include="Types\Activation\MvcDependencyResolverActivator.cs" />
+    <Compile Include="Types\Activation\ReflectionBasedActivator.cs" />
     <Compile Include="Types\ICustomTypeConvertor.cs" />
     <Compile Include="Types\Link.cs" />
     <Compile Include="Types\RelatedLink.cs" />
