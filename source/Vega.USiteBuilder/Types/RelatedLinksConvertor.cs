@@ -13,7 +13,7 @@
     /// <summary>
     /// Implements conversion from xml to RelatedLink collection
     /// </summary>
-    internal class RelatedLinksConvertor : ICustomTypeConvertor
+    public class RelatedLinksConvertor : ICustomTypeConvertor
     {
         #region ICustomTypeConvertor Members
 

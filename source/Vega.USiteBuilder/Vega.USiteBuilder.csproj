@@ -60,7 +60,11 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Web.Mvc, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.Web.Mvc, Version=4.0.0.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.4.0.20710.0\lib\net40\System.Web.Mvc.dll</HintPath>
+    </Reference>
     <Reference Include="System.Web.WebPages, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\ExternalLibraries\System.Web.WebPages.dll</HintPath>
@@ -108,6 +112,7 @@
     <Compile Include="DocumentTypeBuilder\DocumentTypePropertyAttribute.cs" />
     <Compile Include="DocumentTypeBuilder\Enums.cs" />
     <Compile Include="DocumentTypeBuilder\TabNameAttribute.cs" />
+    <Compile Include="DocumentTypeHelper.cs" />
     <Compile Include="ManagerBase.cs" />
     <Compile Include="MemberBuilder\Activation\MemberTypeActivator.cs" />
     <Compile Include="MemberBuilder\Activation\MemberTypePropertiesProxyGenerationHook.cs" />
@@ -120,6 +125,10 @@
     <Compile Include="MemberHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReflectionExtensions.cs" />
+    <Compile Include="Repositories\DocumentRepository.cs" />
+    <Compile Include="Repositories\IDocumentRepository.cs" />
+    <Compile Include="Repositories\INodeRepository.cs" />
+    <Compile Include="Repositories\NodeRepository.cs" />
     <Compile Include="SiteBuilderApplicationBase.cs" />
     <Compile Include="StopwatchLogger.cs" />
     <Compile Include="TemplateBuilder\TemplateAttribute.cs" />
@@ -153,6 +162,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

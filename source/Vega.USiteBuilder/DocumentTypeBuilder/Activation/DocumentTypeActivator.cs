@@ -7,7 +7,7 @@ using umbraco;
 
 namespace Vega.USiteBuilder
 {
-    internal class DocumentTypeActivator
+    public class DocumentTypeActivator
     {
         private ProxyGenerator _generator;
         private ProxyGenerationOptions _options;
