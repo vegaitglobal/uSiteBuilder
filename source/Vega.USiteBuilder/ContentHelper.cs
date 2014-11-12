@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Permissions;
 using System.Web;
 using System.Xml;
 using System.Xml.XPath;
@@ -195,12 +196,14 @@ namespace Vega.USiteBuilder
             return DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(node);
         }
 
-        internal static object GetPropertyValue(DocumentTypeBase entity, PropertyInfo propInfo)
+        internal static object GetPropertyValueOrMixin(DocumentTypeBase entity, PropertyInfo propInfo)
         {
-            return GetPropertyValue(entity, propInfo, null);
+            var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
+
+            return mixinAttribute != null ? GetMixinValue(entity.Source, propInfo) : GetPropertyValue(entity.Source, propInfo, null);
         }
 
-        internal static object GetPropertyValue(DocumentTypeBase entity, PropertyInfo propInfo, DocumentTypePropertyAttribute propAttr)
+        internal static object GetPropertyValue(Node sourceNode, PropertyInfo propInfo, DocumentTypePropertyAttribute propAttr)
         {
             string propertyName;
             string propertyAlias;
@@ -213,7 +216,7 @@ namespace Vega.USiteBuilder
 
             DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-            var property = entity.Source.GetProperty(propertyAlias);
+            var property = sourceNode.GetProperty(propertyAlias);
 
 
             if (property == null)
@@ -250,7 +253,7 @@ namespace Vega.USiteBuilder
                 if (propInfo.PropertyType == typeof(string) ||
                     ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
                 {
-                    value = ContentHelper.GetInnerXml(entity.Source.Id.ToString(), propertyAlias);
+                    value = ContentHelper.GetInnerXml(sourceNode.Id.ToString(), propertyAlias);
                     if (value == null && propInfo.PropertyType == typeof(string))
                     {
                         value = string.Empty;
@@ -413,10 +416,43 @@ namespace Vega.USiteBuilder
                 content = ContentService.GetById(contentItem.Id);
             }
 
-            foreach (PropertyInfo propInfo in contentItem.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            var documentTypeProperties = contentItem.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            SaveProperties(contentItem, contentType, content, documentTypeProperties);
+
+            if (publish)
+            {
+                ContentService.SaveAndPublish(content, userId);
+                contentItem.Id = content.Id;
+            }
+        }
+
+        /// <summary>
+        /// The method saves values from the given properties of the valueSource specified to the content of the contentType type
+        /// </summary>
+        /// <param name="valueSource">An object to get property values from. Can be either DocumentTypeBase or mixin object reference</param>
+        /// <param name="contentType">A content type information</param>
+        /// <param name="content">A content to save values to</param>
+        /// <param name="properties">A valueSource properties collection</param>
+        private static void SaveProperties(object valueSource, IContentType contentType, IContent content, IEnumerable<PropertyInfo> properties)
+        {
+            foreach (var propInfo in properties)
             {
                 try
                 {
+                    var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
+                    if (mixinAttribute != null)
+                    {
+                        var mixin = propInfo.GetValue(valueSource, null);
+                        if (mixin != null)
+                        {
+                            var mixinType = mixinAttribute.GetMixinType(propInfo);
+                            var mixinProperties = mixinType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                            SaveProperties(mixin, contentType, content, mixinProperties);
+                        }
+                        continue;
+                    }
+
                     DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
                     if (propAttr == null)
                     {
@@ -436,23 +472,17 @@ namespace Vega.USiteBuilder
 
                     if (PropertyConvertors.ContainsKey(propInfo.PropertyType))
                     {
-                        content.SetValue(propertyAlias, PropertyConvertors[propInfo.PropertyType].ConvertValueWhenWrite(propInfo.GetValue(contentItem, null)));
+                        content.SetValue(propertyAlias, PropertyConvertors[propInfo.PropertyType].ConvertValueWhenWrite(propInfo.GetValue(valueSource, null)));
                     }
                     else
                     {
-                        content.SetValue(propertyAlias, propInfo.GetValue(contentItem, null));
+                        content.SetValue(propertyAlias, propInfo.GetValue(valueSource, null));
                     }
                 }
                 catch (Exception exc)
                 {
                     throw new Exception(String.Format("Error while saving property: {0}.{1}. Error: {2}, Stack trace: {3}", contentType.Alias, propInfo.Name, exc.Message, exc.StackTrace), exc);
                 }
-            }
-
-            if (publish)
-            {
-                ContentService.SaveAndPublish(content, userId);
-                contentItem.Id = content.Id;
             }
         }
 
@@ -494,6 +524,60 @@ namespace Vega.USiteBuilder
             return path.Contains(string.Format(",{0},", Constants.UmbracoRecycleBinId));
         }
 
+        internal static object GetMixinValue(Node node, PropertyInfo propInfo)
+        {
+            var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
+            var mixinType = mixinAttribute.GetMixinType(propInfo);
+            var mixin = MixinActivator.Current.CreateInstance(mixinType);
+            PopulateInstanceValues(node, mixinAttribute.GetMixinType(propInfo), mixin);
+            return mixin;
+        }
+
+        /// <summary>
+        /// The method populates a gived typedObject with values from the node using typeDocType as a information about typedObject properties. 
+        ///  </summary>
+        /// <param name="node">A node to get values from</param>
+        /// <param name="typeDocType">A type to get properties information from</param>
+        /// <param name="typedObject">Either DocumentTypeBase or mixin reference</param>
+        private static void PopulateInstanceValues(Node node, Type typeDocType, object typedObject)
+        {
+            foreach (PropertyInfo propInfo in typeDocType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                // Let's support typed access to mixins
+                var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
+
+                // if property is a mixin
+                if (mixinAttribute != null 
+                    // and property is not to be intercepted
+                    && (propInfo.GetGetMethod() != null && (!propInfo.GetGetMethod().IsVirtual || propInfo.GetGetMethod().IsFinal)))
+                {
+                    var mixin = GetMixinValue(node, propInfo);
+                    propInfo.SetValue(typedObject, mixin);
+                    continue;
+                }
+
+                DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
+
+                if (propAttr == null || (propInfo.GetGetMethod() != null && propInfo.GetGetMethod().IsVirtual && !propInfo.GetGetMethod().IsFinal))
+                {
+                    continue; // skip this property - not part of a Document Type or is virtual in which case value will be intercepted
+                }
+
+                object value = null;
+                try
+                {
+                    value = GetPropertyValue(node, propInfo, propAttr);
+                    propInfo.SetValue(typedObject, value, null);
+                }
+                catch (Exception exc)
+                {
+                    throw new Exception(string.Format("Cannot set the value of a document type property {0}.{1} (document type: {2}) to value: '{3}' (value type: {4}). Error: {5}",
+                        typeDocType.Name, propInfo.Name, propInfo.PropertyType.FullName,
+                        value, value != null ? value.GetType().FullName : "", exc.Message));
+                }
+            }            
+        }
+
         internal static bool PopuplateInstance<T>(Node node, Type typeDocType, T typedPage) where T : DocumentTypeBase
         {
             if (node == null || node.NodeTypeAlias == null || node.Id == 0)
@@ -527,28 +611,7 @@ namespace Vega.USiteBuilder
             typedPage.Version = node.Version;
             typedPage.Source = node;
 
-            foreach (PropertyInfo propInfo in typeDocType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
-                if (propAttr == null || (propInfo.GetGetMethod() != null && propInfo.GetGetMethod().IsVirtual && !propInfo.GetGetMethod().IsFinal))
-                {
-                    continue; // skip this property - not part of a Document Type or is virtual in which case value will be intercepted
-                }
-
-                object value = null;
-                try
-                {
-                    value = GetPropertyValue(typedPage, propInfo, propAttr);
-                    propInfo.SetValue(typedPage, value, null);
-                }
-                catch (Exception exc)
-                {
-                    throw new Exception(string.Format("Cannot set the value of a document type property {0}.{1} (document type: {2}) to value: '{3}' (value type: {4}). Error: {5}",
-                        typeDocType.Name, propInfo.Name, propInfo.PropertyType.FullName,
-                        value, value != null ? value.GetType().FullName : "", exc.Message));
-                }
-            }
-
+            PopulateInstanceValues(node, typeDocType, typedPage);
             return true;
         }
     }

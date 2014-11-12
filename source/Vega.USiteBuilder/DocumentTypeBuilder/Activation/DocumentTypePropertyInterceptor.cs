@@ -23,7 +23,7 @@ namespace Vega.USiteBuilder
                     object value = null;
                     try
                     {
-                        value  = ContentHelper.GetPropertyValue(docType, propInfo);
+                        value = ContentHelper.GetPropertyValueOrMixin(docType, propInfo);
                         docType[propertyName] = value;
                     }
                     catch (Exception exc)

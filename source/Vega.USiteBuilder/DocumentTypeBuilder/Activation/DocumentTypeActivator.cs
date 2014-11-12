@@ -41,19 +41,8 @@ namespace Vega.USiteBuilder
 
         public virtual T CreateAndPopulateTypedInstance<T>(int nodeId) where T : DocumentTypeBase
         {
-            T retVal = null;
             Node node = uQuery.GetNode(nodeId);
-            if (node != null)
-            {
-                Type typeDocType = DocumentTypeManager.GetDocumentTypeType(node.NodeTypeAlias);
-                T typedPage = (T)CreateInstance(typeDocType);
-                if (ContentHelper.PopuplateInstance<T>(node, typeDocType, typedPage))
-                {
-                    retVal = typedPage;
-                }
-            }
-
-            return retVal;
+            return CreateAndPopulateTypedInstance<T>(node);
         }
 
         public virtual object CreateInstance(Type typeDocType)

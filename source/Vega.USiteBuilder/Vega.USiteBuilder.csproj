@@ -102,6 +102,7 @@
     <Compile Include="DataTypeBuilder\DataTypeBase.cs" />
     <Compile Include="DataTypeBuilder\DataTypeManager.cs" />
     <Compile Include="DataTypeBuilder\DataTypePrevalue.cs" />
+    <Compile Include="DocumentTypeBuilder\Activation\MixinActivator.cs" />
     <Compile Include="DocumentTypeBuilder\ContentComparison.cs" />
     <Compile Include="DocumentTypeBuilder\DocumentTypeAttribute.cs" />
     <Compile Include="DocumentTypeBuilder\DocumentTypeBase.cs" />
@@ -111,6 +112,7 @@
     </Compile>
     <Compile Include="DocumentTypeBuilder\DocumentTypePropertyAttribute.cs" />
     <Compile Include="DocumentTypeBuilder\Enums.cs" />
+    <Compile Include="DocumentTypeBuilder\MixinPropertyAttribute.cs" />
     <Compile Include="DocumentTypeBuilder\TabNameAttribute.cs" />
     <Compile Include="DocumentTypeHelper.cs" />
     <Compile Include="ManagerBase.cs" />
