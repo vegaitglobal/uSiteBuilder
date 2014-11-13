@@ -29,6 +29,16 @@ namespace Vega.USiteBuilder
             if (node != null)
             {
                 Type typeDocType = DocumentTypeManager.GetDocumentTypeType(node.NodeTypeAlias);
+                if (typeDocType == null)
+                {
+                    var message =
+                        string.Format(
+                            "Error processing document with id {0} of type '{1}' - no code for the document type found. ",
+                            node.Id, node.NodeTypeAlias);
+
+                    throw new Exception(message);
+                }
+
                 T typedPage = (T)CreateInstance(typeDocType);
                 if (ContentHelper.PopuplateInstance<T>(node, typeDocType, typedPage))
                 {
