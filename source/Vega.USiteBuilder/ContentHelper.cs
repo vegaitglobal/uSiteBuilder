@@ -545,7 +545,7 @@ namespace Vega.USiteBuilder
         }
 
         /// <summary>
-        /// The method populates a gived typedObject with values from the node using typeDocType as a information about typedObject properties. 
+        /// The method populates a given typedObject with values from the node using typeDocType as a information about typedObject properties. 
         ///  </summary>
         /// <param name="node">A node to get values from</param>
         /// <param name="typeDocType">A type to get properties information from</param>
