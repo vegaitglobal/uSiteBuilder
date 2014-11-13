@@ -27,7 +27,7 @@ namespace Vega.USiteBuilder
         /// <returns>Returns a newly created mixin object</returns>
         public virtual MixinBase CreateInstance(Type mixinType, Node node)
         {
-            var result = (MixinBase) System.Activator.CreateInstance(mixinType);
+            var result = (MixinBase) DocumentTypeResolver.Instance.Activator.CreateInstance(mixinType);
             result.Source = node;
             return result;
         }

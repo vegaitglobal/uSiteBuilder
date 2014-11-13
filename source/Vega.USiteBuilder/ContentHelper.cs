@@ -206,7 +206,7 @@ namespace Vega.USiteBuilder
         {
             return GetPropertyValue(entity.Source, propInfo, propAttr);
         }
-        
+
         internal static object GetPropertyValueOrMixin(ContentTypeBase entity, PropertyInfo propInfo)
         {
             var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
@@ -540,7 +540,7 @@ namespace Vega.USiteBuilder
             var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
             var mixinType = mixinAttribute.GetMixinType(propInfo);
             var mixin = MixinActivator.Current.CreateInstance(mixinType, node);
-            PopulateInstanceValues(node, mixinAttribute.GetMixinType(propInfo), mixin);
+            PopulateInstanceValues(node, mixinType, mixin);
             return mixin;
         }
 
@@ -550,7 +550,7 @@ namespace Vega.USiteBuilder
         /// <param name="node">A node to get values from</param>
         /// <param name="typeDocType">A type to get properties information from</param>
         /// <param name="typedObject">Either DocumentTypeBase or mixin reference</param>
-        private static void PopulateInstanceValues(Node node, Type typeDocType, object typedObject)
+        private static void PopulateInstanceValues(Node node, Type typeDocType, ContentTypeBase typedObject)
         {
             foreach (PropertyInfo propInfo in typeDocType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
@@ -563,7 +563,7 @@ namespace Vega.USiteBuilder
                     && (propInfo.GetGetMethod() != null && (!propInfo.GetGetMethod().IsVirtual || propInfo.GetGetMethod().IsFinal)))
                 {
                     var mixin = GetMixinValue(node, propInfo);
-                    propInfo.SetValue(typedObject, mixin.Source, null);
+                    propInfo.SetValue(typedObject, mixin, null);
                     continue;
                 }
 
