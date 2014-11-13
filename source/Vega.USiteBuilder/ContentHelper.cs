@@ -196,6 +196,17 @@ namespace Vega.USiteBuilder
             return DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(node);
         }
 
+        internal static object GetPropertyValue(DocumentTypeBase entity, PropertyInfo propInfo)
+        {
+            return GetPropertyValue(entity, propInfo, null);
+        }
+
+        internal static object GetPropertyValue(DocumentTypeBase entity, PropertyInfo propInfo,
+            DocumentTypePropertyAttribute propAttr)
+        {
+            return GetPropertyValue(entity.Source, propInfo, propAttr);
+        }
+        
         internal static object GetPropertyValueOrMixin(DocumentTypeBase entity, PropertyInfo propInfo)
         {
             var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
