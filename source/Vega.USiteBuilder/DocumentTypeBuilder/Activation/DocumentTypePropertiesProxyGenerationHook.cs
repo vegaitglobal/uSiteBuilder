@@ -16,7 +16,8 @@ namespace Vega.USiteBuilder
 
         public bool ShouldInterceptMethod(Type type, System.Reflection.MethodInfo memberInfo)
         {
-            return memberInfo.IsGetterOrSetterForPropertyWithAttribute(typeof(DocumentTypePropertyAttribute))
+            return (memberInfo.IsGetterOrSetterForPropertyWithAttribute(typeof(DocumentTypePropertyAttribute))
+                || memberInfo.IsGetterOrSetterForPropertyWithAttribute(typeof(MixinPropertyAttribute)))
                 && memberInfo.IsCompilerGenerated();
         }
 

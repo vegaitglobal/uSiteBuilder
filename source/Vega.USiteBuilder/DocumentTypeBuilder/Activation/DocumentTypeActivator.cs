@@ -29,6 +29,16 @@ namespace Vega.USiteBuilder
             if (node != null)
             {
                 Type typeDocType = DocumentTypeManager.GetDocumentTypeType(node.NodeTypeAlias);
+                if (typeDocType == null)
+                {
+                    var message =
+                        string.Format(
+                            "Error processing document with id {0} of type '{1}' - no code for the document type found. ",
+                            node.Id, node.NodeTypeAlias);
+
+                    throw new Exception(message);
+                }
+
                 T typedPage = (T)CreateInstance(typeDocType);
                 if (ContentHelper.PopuplateInstance<T>(node, typeDocType, typedPage))
                 {
@@ -41,19 +51,8 @@ namespace Vega.USiteBuilder
 
         public virtual T CreateAndPopulateTypedInstance<T>(int nodeId) where T : DocumentTypeBase
         {
-            T retVal = null;
             Node node = uQuery.GetNode(nodeId);
-            if (node != null)
-            {
-                Type typeDocType = DocumentTypeManager.GetDocumentTypeType(node.NodeTypeAlias);
-                T typedPage = (T)CreateInstance(typeDocType);
-                if (ContentHelper.PopuplateInstance<T>(node, typeDocType, typedPage))
-                {
-                    retVal = typedPage;
-                }
-            }
-
-            return retVal;
+            return CreateAndPopulateTypedInstance<T>(node);
         }
 
         public virtual object CreateInstance(Type typeDocType)

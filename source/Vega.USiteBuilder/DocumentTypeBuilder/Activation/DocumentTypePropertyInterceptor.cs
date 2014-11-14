@@ -9,7 +9,7 @@ namespace Vega.USiteBuilder
     {
         public void Intercept(IInvocation invocation)
         {
-            DocumentTypeBase docType = (DocumentTypeBase)invocation.InvocationTarget;
+            ContentTypeBase docType = (ContentTypeBase) invocation.InvocationTarget;
 
             string propertyName = invocation.Method.GetPropertyName();
 
@@ -17,13 +17,15 @@ namespace Vega.USiteBuilder
             {
                 if (docType[propertyName] == null)
                 {
-                    Type typeDocType = DocumentTypeManager.GetDocumentTypeType(docType.Source.NodeTypeAlias);
+                    // Type typeDocType = DocumentTypeManager.GetDocumentTypeType(docType.Source.NodeTypeAlias);
+                    var typeDocType = ProxyUtil.GetUnproxiedType(docType);
+
                     PropertyInfo propInfo = typeDocType.GetProperty(propertyName);
 
                     object value = null;
                     try
                     {
-                        value  = ContentHelper.GetPropertyValue(docType, propInfo);
+                        value = ContentHelper.GetPropertyValueOrMixin(docType, propInfo);
                         docType[propertyName] = value;
                     }
                     catch (Exception exc)

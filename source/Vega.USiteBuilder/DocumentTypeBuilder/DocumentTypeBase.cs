@@ -9,7 +9,7 @@ namespace Vega.USiteBuilder
     /// <summary>
     /// Base class for all document types.
     /// </summary>
-    public abstract class DocumentTypeBase
+    public abstract class DocumentTypeBase : ContentTypeBase
     {
         #region [Node properties]
         /// <summary>
@@ -76,45 +76,6 @@ namespace Vega.USiteBuilder
         /// Name of the Writer of this content item
         /// </summary>
         public string WriterName { get; internal set; }
-        /// <summary>
-        /// Source node object.
-        /// </summary>
-        internal Node Source { get; set; }
-        /// <summary>
-        /// Gets or sets the <see cref="System.Object"/> value at the specified index.
-        /// </summary>
-        /// <value>
-        /// The <see cref="System.Object"/>.
-        /// </value>
-        /// <param name="index">The index.</param>
-        /// <returns></returns>
-        internal object this[string index]
-        {
-            get
-            {
-                if (_propertyValues.ContainsKey(index))
-                {
-                    return _propertyValues[index];
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            set
-            {
-                if (_propertyValues.ContainsKey(index))
-                {
-                    _propertyValues[index] = value;
-                }
-                else
-                {
-                    _propertyValues.Add(index, value);
-                }
-            }
-        }
-
-        private Dictionary<string, object> _propertyValues = new Dictionary<string, object>();
         #endregion
 
         #region [Public methods]
