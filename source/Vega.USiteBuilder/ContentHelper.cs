@@ -51,7 +51,58 @@ namespace Vega.USiteBuilder
         {
             return DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(Node.GetCurrent());
         }
-        
+
+		/// <summary>
+		/// Gets all ancestor nodes of a given type from a given node id.
+		/// (parent's path back to root)
+		/// </summary>
+		/// <typeparam name="T">Strongly typed content item</typeparam>
+		/// <param name="nodeId">Id of node for which to retrieve node ancestors</param>
+		public static IEnumerable<T> GetAncestors<T>(int nodeId)
+			where T : DocumentTypeBase, new()
+		{
+			Node parentNode = uQuery.GetNode(nodeId);
+
+			string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeof(T));
+
+			IEnumerable<Node> ancestorNodes = parentNode.GetAncestorNodes();
+
+			foreach (Node childNode in ancestorNodes)
+			{
+				// Check if this childNode is of a given document type and if not deleted
+				if (docTypeAlias != childNode.NodeTypeAlias)
+					continue;
+
+				var d = ContentHelper.GetByNode<T>(childNode);
+				if (d != null)
+					yield return d;
+			}
+		}
+
+
+		/// <summary>
+		/// Gets all ancestor nodes from a given node id. 
+		/// (parent's path back to root)
+		/// </summary>
+		/// <param name="nodeId">Id of node for which to retrieve node ancestors</param>
+		public static IEnumerable<DocumentTypeBase> GetAncestors(int nodeId)
+		{
+			Node parentNode = uQuery.GetNode(nodeId);
+
+			if (parentNode.Id != nodeId)
+				yield break;
+
+			IEnumerable<Node> ancestorNodes = parentNode.GetAncestorNodes();
+
+			if (ancestorNodes == null) yield break;
+			foreach (Node childNode in ancestorNodes)
+			{
+				var d = DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(childNode);
+				if (d != null)
+					yield return d;
+			}
+		}
+
         /// <summary>
         /// Gets all children nodes of a given type from a given node id.
         /// </summary>
