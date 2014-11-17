@@ -79,7 +79,26 @@ namespace Vega.USiteBuilder
         #endregion
 
         #region [Public methods]
-        /// <summary>
+		
+		/// <summary>
+		/// Gets all ancestor nodes of a given type from a given node.
+		/// </summary>
+		/// <typeparam name="T">Strongly typed content item</typeparam>
+		public IEnumerable<T> GetAncestors<T>()
+			where T : DocumentTypeBase, new()
+		{
+			return ContentHelper.GetAncestors<T>(this.Id);
+		}
+
+	    /// <summary>
+	    /// Gets all ancestor nodes from a given node. 
+	    /// </summary>
+	    public IEnumerable<DocumentTypeBase> GetAncestors()
+	    {
+		    return ContentHelper.GetAncestors(this.Id);
+	    }
+
+	    /// <summary>
         /// Gets all children nodes of a given type from a given node id.
         /// </summary>
         /// <typeparam name="T">Strongly typed content item</typeparam>
