@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>uSiteBuilder</id>
-    <version>2.0.1.0</version>
+    <version>2.0.2.0</version>
     <title>Vega uSiteBuilder</title>
     <authors>Vega IT Sourcing</authors>
     <owners>vegait</owners>
@@ -12,7 +12,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Vega IT’s uSitebuilder is an open source (LPGL) framework created for .NET developers to accelerate and streamline their Umbraco based development projects.</description>
     <summary>Our objective is to enable back-end developers to adhere to the .NET standards with minimal external interaction, and to facilitate the automation of their deployments.</summary>
-    <releaseNotes>Please visit http://www.vegaitsourcing.rs/#!/articles/2014/03/usitebuilder-v2-release-notes to view the release notes.</releaseNotes>
+    <releaseNotes>Please visit http://www.vegaitsourcing.rs/#!/articles/2014/11/usitebuilder-v202-release-notes to view the release notes.</releaseNotes>
     <copyright>© Vega IT Sourcing DOO. All rights reserved.</copyright>
     <tags>VegaIT uSiteBuilder Umbraco CMS ASP.NET</tags>
     <dependencies>
