@@ -2,8 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
     using System.Xml;
     using umbraco.presentation.nodeFactory;
     using Newtonsoft.Json;
@@ -80,7 +78,23 @@
                     }
                     else
                     {
-                        retVal = (List<RelatedLink>)JsonConvert.DeserializeObject<List<RelatedLink>>(inputString);
+                        retVal = JsonConvert.DeserializeObject<List<RelatedLink>>(inputString);
+                        foreach (RelatedLink link in retVal)
+                        {
+                            int? relatedNodeId = link.RelatedNodeId;
+                            if (relatedNodeId.HasValue)
+                            {
+                                switch (link.Type)
+                                {
+                                    case RelatedLink.RelatedLinkType.Internal:
+                                        link.Url = new Node(relatedNodeId.Value).NiceUrl;
+                                        break;
+                                    case RelatedLink.RelatedLinkType.Media:
+                                        link.Url = Util.GetMediaUrlById(relatedNodeId.Value);
+                                        break;
+                                }
+                            }
+                        }
                     }
                 }
 
