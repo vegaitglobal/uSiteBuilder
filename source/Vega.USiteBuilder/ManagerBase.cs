@@ -212,11 +212,11 @@ namespace Vega.USiteBuilder
                 {
                     return DataTypeDefinition.GetDataTypeDefinition((int)UmbracoPropertyType.Textstring);
                 }
-                if (propInfo.PropertyType == typeof(DateTime))
+                if (propInfo.PropertyType == typeof(DateTime) || propInfo.PropertyType == typeof(DateTime?))
                 {
                     return DataTypeDefinition.GetDataTypeDefinition((int)UmbracoPropertyType.DatePicker);
                 }
-                if (propInfo.PropertyType == typeof(bool))
+                if (propInfo.PropertyType == typeof(bool) || propInfo.PropertyType == typeof(bool?))
                 {
                     return DataTypeDefinition.GetDataTypeDefinition((int)UmbracoPropertyType.TrueFalse);
                 }

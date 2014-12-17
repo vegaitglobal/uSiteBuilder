@@ -52,56 +52,56 @@ namespace Vega.USiteBuilder
             return DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(Node.GetCurrent());
         }
 
-		/// <summary>
-		/// Gets all ancestor nodes of a given type from a given node id.
-		/// (parent's path back to root)
-		/// </summary>
-		/// <typeparam name="T">Strongly typed content item</typeparam>
-		/// <param name="nodeId">Id of node for which to retrieve node ancestors</param>
-		public static IEnumerable<T> GetAncestors<T>(int nodeId)
-			where T : DocumentTypeBase, new()
-		{
-			Node parentNode = uQuery.GetNode(nodeId);
+        /// <summary>
+        /// Gets all ancestor nodes of a given type from a given node id.
+        /// (parent's path back to root)
+        /// </summary>
+        /// <typeparam name="T">Strongly typed content item</typeparam>
+        /// <param name="nodeId">Id of node for which to retrieve node ancestors</param>
+        public static IEnumerable<T> GetAncestors<T>(int nodeId)
+            where T : DocumentTypeBase, new()
+        {
+            Node parentNode = uQuery.GetNode(nodeId);
 
-			string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeof(T));
+            string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeof(T));
 
-			IEnumerable<Node> ancestorNodes = parentNode.GetAncestorNodes();
+            IEnumerable<Node> ancestorNodes = parentNode.GetAncestorNodes();
 
-			foreach (Node childNode in ancestorNodes)
-			{
-				// Check if this childNode is of a given document type and if not deleted
-				if (docTypeAlias != childNode.NodeTypeAlias)
-					continue;
+            foreach (Node childNode in ancestorNodes)
+            {
+                // Check if this childNode is of a given document type and if not deleted
+                if (docTypeAlias != childNode.NodeTypeAlias)
+                    continue;
 
-				var d = ContentHelper.GetByNode<T>(childNode);
-				if (d != null)
-					yield return d;
-			}
-		}
+                var d = ContentHelper.GetByNode<T>(childNode);
+                if (d != null)
+                    yield return d;
+            }
+        }
 
 
-		/// <summary>
-		/// Gets all ancestor nodes from a given node id. 
-		/// (parent's path back to root)
-		/// </summary>
-		/// <param name="nodeId">Id of node for which to retrieve node ancestors</param>
-		public static IEnumerable<DocumentTypeBase> GetAncestors(int nodeId)
-		{
-			Node parentNode = uQuery.GetNode(nodeId);
+        /// <summary>
+        /// Gets all ancestor nodes from a given node id. 
+        /// (parent's path back to root)
+        /// </summary>
+        /// <param name="nodeId">Id of node for which to retrieve node ancestors</param>
+        public static IEnumerable<DocumentTypeBase> GetAncestors(int nodeId)
+        {
+            Node parentNode = uQuery.GetNode(nodeId);
 
-			if (parentNode.Id != nodeId)
-				yield break;
+            if (parentNode.Id != nodeId)
+                yield break;
 
-			IEnumerable<Node> ancestorNodes = parentNode.GetAncestorNodes();
+            IEnumerable<Node> ancestorNodes = parentNode.GetAncestorNodes();
 
-			if (ancestorNodes == null) yield break;
-			foreach (Node childNode in ancestorNodes)
-			{
-				var d = DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(childNode);
-				if (d != null)
-					yield return d;
-			}
-		}
+            if (ancestorNodes == null) yield break;
+            foreach (Node childNode in ancestorNodes)
+            {
+                var d = DocumentTypeResolver.Instance.GetTyped<DocumentTypeBase>(childNode);
+                if (d != null)
+                    yield return d;
+            }
+        }
 
         /// <summary>
         /// Gets all children nodes of a given type from a given node id.
@@ -112,7 +112,7 @@ namespace Vega.USiteBuilder
         public static IEnumerable<T> GetChildren<T>(int parentId, bool deepGet)
             where T : DocumentTypeBase, new()
         {
-            Node parentNode = uQuery.GetNode(parentId);            
+            Node parentNode = uQuery.GetNode(parentId);
 
             string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeof(T));
 
@@ -285,17 +285,13 @@ namespace Vega.USiteBuilder
             {
                 value = null;
             }
-
-            else if (propInfo.PropertyType.Equals(typeof(Boolean)))
+            else if (propInfo.PropertyType == typeof(bool))
             {
-                if (String.IsNullOrEmpty(property.Value) || property.Value == "0")
-                {
-                    value = false;
-                }
-                else
-                {
-                    value = true;
-                }
+                value = (!String.IsNullOrEmpty(property.Value) && property.Value != "0");
+            }
+            else if (propInfo.PropertyType == typeof(bool?))
+            {
+                value = String.IsNullOrEmpty(property.Value) ? (bool?)null : (property.Value != "0");
             }
             else if (propAttr.CustomTypeConverter != null)
             {
@@ -609,7 +605,7 @@ namespace Vega.USiteBuilder
                 var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
 
                 // if property is a mixin
-                if (mixinAttribute != null 
+                if (mixinAttribute != null
                     // and property is not to be intercepted
                     && (propInfo.GetGetMethod() != null && (!propInfo.GetGetMethod().IsVirtual || propInfo.GetGetMethod().IsFinal)))
                 {
@@ -637,7 +633,7 @@ namespace Vega.USiteBuilder
                         typeDocType.Name, propInfo.Name, propInfo.PropertyType.FullName,
                         value, value != null ? value.GetType().FullName : "", exc.Message));
                 }
-            }            
+            }
         }
 
         internal static bool PopuplateInstance<T>(Node node, Type typeDocType, T typedPage) where T : DocumentTypeBase
