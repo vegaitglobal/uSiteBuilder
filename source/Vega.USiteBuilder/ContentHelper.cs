@@ -333,7 +333,7 @@ namespace Vega.USiteBuilder
 
                 // TODO: If data type is DateTime and is nullable and is less than 1.1.1000 than set it to NULL
             }
-            else if (propInfo.PropertyType.Equals(typeof(HtmlString)))
+            else if (propInfo.PropertyType == typeof(HtmlString) || propInfo.PropertyType == typeof(IHtmlString))
             {
                 value = new HtmlString(property.Value);
             }
