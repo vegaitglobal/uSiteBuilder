@@ -293,6 +293,14 @@ namespace Vega.USiteBuilder
             {
                 value = String.IsNullOrEmpty(property.Value) ? (bool?)null : (property.Value != "0");
             }
+            else if (propInfo.PropertyType == typeof(int))
+            {
+                value = Int32.Parse(property.Value);
+            }
+            else if (propInfo.PropertyType == typeof(int?))
+            {
+                value = String.IsNullOrEmpty(property.Value) ? (int?)null : Int32.Parse(property.Value);
+            }
             else if (propAttr.CustomTypeConverter != null)
             {
                 value = ((ICustomTypeConvertor)Activator.Current.GetInstance(propAttr.CustomTypeConverter)).ConvertValueWhenRead(property.Value);

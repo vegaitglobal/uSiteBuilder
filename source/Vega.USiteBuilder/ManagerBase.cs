@@ -220,6 +220,10 @@ namespace Vega.USiteBuilder
                 {
                     return DataTypeDefinition.GetDataTypeDefinition((int)UmbracoPropertyType.TrueFalse);
                 }
+                if (propInfo.PropertyType == typeof(int) || propInfo.PropertyType == typeof(int?))
+                {
+                    return DataTypeDefinition.GetDataTypeDefinition((int)UmbracoPropertyType.Numeric);
+                }
                 if (propInfo.PropertyType == typeof(HtmlString) || propInfo.PropertyType == typeof(IHtmlString))
                 {
                     return DataTypeDefinition.GetDataTypeDefinition((int)UmbracoPropertyType.RichtextEditor);
