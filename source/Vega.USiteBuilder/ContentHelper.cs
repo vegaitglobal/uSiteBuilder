@@ -648,12 +648,14 @@ namespace Vega.USiteBuilder
             }
 
             int parentId = 0;
-            try
-            {
-                // it is required to put this to try catch because it is not possible to check if node.Parent is empty.
-                parentId = node.Parent.Id;
-            }
-            catch { }
+				var path = node.Path.Split(',');
+
+			//memory consumption update via @liamcoghill via issues/18
+	        if (path.Length > 1)
+	        {
+		        //Take the second last node in the path because that is the parent node
+		        parentId = int.Parse(path[path.Length - 2]);
+	        }
 
             typedPage.Id = node.Id;
             typedPage.Name = node.Name;
