@@ -136,7 +136,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public IEnumerable<DocumentTypeBase> GetChildren(bool deepGet)
         {
-            return ContentHelper.GetChildren(this.Id);
+			return ContentHelper.GetChildren(this.Id, deepGet);
         }
 
         /// <summary>
