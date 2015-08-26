@@ -9,7 +9,7 @@ namespace Vega.USiteBuilder
 	using System.Collections.Generic;
 	using System.Linq;
     using DBTypes = umbraco.cms.businesslogic.datatype.DBTypes;
-	
+
 
 	/// <summary>
 	/// Manages DataType synchronization
@@ -54,35 +54,35 @@ namespace Vega.USiteBuilder
 
             var result = prevalues.ToDictionary(x => x.Alias, x => new PreValue(x.SortOrder, x.Value));
             return result;
-	    }
+        }
 
-		private void SynchronizeDataTypes()
-		{
-			foreach (Type typeDataType in Util.GetFirstLevelSubTypes(typeof(DataTypeBase)))
-			{
-				var dataTypeAttr = GetDataTypeAttribute(typeDataType);
+        private void SynchronizeDataTypes()
+        {
+            foreach (Type typeDataType in Util.GetFirstLevelSubTypes(typeof(DataTypeBase)))
+            {
+                var dataTypeAttr = GetDataTypeAttribute(typeDataType);
 
-				try
-				{
-					this.AddToSynchronized(null, dataTypeAttr.Name, typeDataType);
-				}
-				catch (ArgumentException exc)
-				{
-					throw new Exception(
-						string.Format(
-							"DataType with name '{0}' already exists! Please use unique DataType names. DataType causing the problem: '{1}' (assembly: '{2}'). Error message: {3}",
-							dataTypeAttr.Name,
-							typeDataType.FullName,
-							typeDataType.Assembly.FullName,
-							exc.Message));
-				}
+                try
+                {
+	                this.AddToSynchronized(null, dataTypeAttr.Name, typeDataType);
+                }
+                catch (ArgumentException exc)
+                {
+	                throw new Exception(
+		                string.Format(
+			                "DataType with name '{0}' already exists! Please use unique DataType names. DataType causing the problem: '{1}' (assembly: '{2}'). Error message: {3}",
+			                dataTypeAttr.Name,
+			                typeDataType.FullName,
+			                typeDataType.Assembly.FullName,
+			                exc.Message));
+                }
 
-			    var dtd = DataTypeService.GetDataTypeDefinitionByPropertyEditorAlias(dataTypeAttr.PropertyEditorAlias).FirstOrDefault();
+                // Old code that caused the error.
+                //// var dtd = DataTypeService.GetDataTypeDefinitionByPropertyEditorAlias(dataTypeAttr.PropertyEditorAlias).FirstOrDefault();
 
+                var dtd = this.DataTypeService.GetAllDataTypeDefinitions().FirstOrDefault(d => d.Name == dataTypeAttr.Name || (!string.IsNullOrEmpty(dataTypeAttr.UniqueId) && d.Key == new Guid(dataTypeAttr.UniqueId)));
 
-                // var dtd = DataTypeDefinition.GetAll().FirstOrDefault(d => d.Text == dataTypeAttr.Name || (!string.IsNullOrEmpty(dataTypeAttr.UniqueId) && d.UniqueId == new Guid(dataTypeAttr.UniqueId)));
-
-				// If there are no datatypes with name already we can go ahead and create one
+                // If there are no datatypes with name already we can go ahead and create one
                 if (dtd == null)
                 {
                     var newDataTypeDefinition = new DataTypeDefinition(dataTypeAttr.ParentId, dataTypeAttr.PropertyEditorAlias)
@@ -124,8 +124,8 @@ namespace Vega.USiteBuilder
                         }
                     }
                 }
-			}
-		}
+            }
+        }
 
 		/// <summary>
 		/// Get's the document type attribute or returns attribute with default values if attribute is not found
