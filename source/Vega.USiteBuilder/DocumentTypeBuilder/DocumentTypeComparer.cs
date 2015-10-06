@@ -156,7 +156,7 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
                 return false;
             }
 
-            foreach (Template template in allowedTemplates)
+            foreach (var template in allowedTemplates)
             {
                 if (!existingTemplates.Any(t => t.Alias == template.Alias))
                 {
