@@ -4,13 +4,13 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Vega uSiteBuilder")]
+[assembly: AssemblyTitle("uSiteBuilder")]
 [assembly: AssemblyDescription("Vega IT’s uSitebuilder is an open source (LPGL) framework created for .NET developers to accelerate and streamline their Umbraco based development projects.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("VegaIT")]
-[assembly: AssemblyProduct("Vega.USiteBuilder")]
-[assembly: AssemblyCopyright("Copyright © Vega IT Sourcing DOO 2011")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCompany("Vega IT Sourcing")]
+[assembly: AssemblyProduct("uSiteBuilder")]
+[assembly: AssemblyCopyright("Copyright © Vega IT Sourcing DOO 2016 - All rights reserved")]
+[assembly: AssemblyTrademark("Vega IT Sourcing")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.2.0")]
-[assembly: AssemblyFileVersion("2.0.2.0")]
+[assembly: AssemblyVersion("2.0.3.0")]
+[assembly: AssemblyFileVersion("2.0.3.0")]
