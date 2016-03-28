@@ -5,8 +5,17 @@ namespace Vega.USiteBuilder
   /// </summary>
   public enum DataTypePrevalueCompareType
   {
+      /// <summary>
+      /// The by alias
+      /// </summary>
     ByAlias,
+    /// <summary>
+    /// The by value
+    /// </summary>
     ByValue,
+    /// <summary>
+    /// The by alias and value
+    /// </summary>
     ByAliasAndValue
   }
 

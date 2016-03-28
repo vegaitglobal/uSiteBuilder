@@ -4,10 +4,17 @@ using umbraco.presentation.nodeFactory;
 
 namespace Vega.USiteBuilder
 {
+    /// <summary>
+    /// Umbraco template page base abstract class
+    /// </summary>
     public abstract class UmbracoTemplatePageBase : Umbraco.Web.Mvc.UmbracoTemplatePage
     {
     }
 
+    /// <summary>
+    /// Umbraco template page base class
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class UmbracoTemplatePageBase<T> : UmbracoTemplatePageBase
     where T : DocumentTypeBase, new()
     {

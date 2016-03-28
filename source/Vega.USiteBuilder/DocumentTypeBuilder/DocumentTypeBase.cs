@@ -14,10 +14,17 @@ namespace Vega.USiteBuilder
     /// </summary>
     public abstract class DocumentTypeBase : DynamicNode
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DocumentTypeBase"/> class.
+        /// </summary>
         public DocumentTypeBase()
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DocumentTypeBase"/> class.
+        /// </summary>
+        /// <param name="nodeId">The node identifier.</param>
         protected DocumentTypeBase(int nodeId)
             : base(nodeId)
         {
@@ -26,6 +33,11 @@ namespace Vega.USiteBuilder
         #region [Public methods]
 
 
+        /// <summary>
+        /// Typeds the ancestor or self.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public T TypedAncestorOrSelf<T>() where T : DocumentTypeBase, new()
         {
             DynamicNode ancestorOrSelf = this.AncestorOrSelf(DocumentTypeManager.GetDocumentTypeAlias(typeof (T)));

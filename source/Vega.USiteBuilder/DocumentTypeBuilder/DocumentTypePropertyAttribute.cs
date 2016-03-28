@@ -9,6 +9,9 @@
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     public class DocumentTypePropertyAttribute : Attribute
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DocumentTypePropertyAttribute"/> class.
+        /// </summary>
         public DocumentTypePropertyAttribute() 
         {
             // setting up default values
@@ -144,6 +147,12 @@
         /// </summary>
         public object DefaultValue { get; set; }
 
+        /// <summary>
+        /// Gets or sets the custom type converter.
+        /// </summary>
+        /// <value>
+        /// The custom type converter.
+        /// </value>
         public Type CustomTypeConverter { get; set; }
     }
 }

@@ -124,11 +124,26 @@
         public const string TabGenericProperties = "Generic Properties";
     }
 
+    /// <summary>
+    /// Status enumeration
+    /// </summary>
     public enum Status
     {
+        /// <summary>
+        /// The same
+        /// </summary>
         Same,
+        /// <summary>
+        /// The new
+        /// </summary>
         New,
+        /// <summary>
+        /// The deleted
+        /// </summary>
         Deleted,
+        /// <summary>
+        /// The changed
+        /// </summary>
         Changed
     }
 }

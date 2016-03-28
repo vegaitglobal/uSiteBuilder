@@ -8,8 +8,15 @@ using umbraco.cms.businesslogic.template;
 
 namespace Vega.USiteBuilder.TemplateBuilder
 {
+    /// <summary>
+    /// Template comparer utility class
+    /// </summary>
     public class TemplateComparer
     {
+        /// <summary>
+        /// Previews the template changes.
+        /// </summary>
+        /// <returns></returns>
         public List<ContentComparison> PreviewTemplateChanges()
         {
             if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.WebForms)
@@ -90,6 +97,12 @@ namespace Vega.USiteBuilder.TemplateBuilder
             return templateComparison;
         }
 
+        /// <summary>
+        /// Previews the templates.
+        /// </summary>
+        /// <param name="typeBaseTemplate">The type base template.</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public List<ContentComparison> PreviewTemplates(Type typeBaseTemplate)
         {
             List<ContentComparison> templateComparison = new List<ContentComparison>();

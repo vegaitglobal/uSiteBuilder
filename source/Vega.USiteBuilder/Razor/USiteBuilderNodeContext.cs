@@ -25,6 +25,11 @@
             }
         }
 
+        /// <summary>
+        /// Sets the members.
+        /// </summary>
+        /// <param name="macro">The macro.</param>
+        /// <param name="node">The node.</param>
         public override void SetMembers(umbraco.cms.businesslogic.macro.MacroModel macro, umbraco.interfaces.INode node)
         {
             T content = ContentHelper.GetByNodeId<T>(node.Id);

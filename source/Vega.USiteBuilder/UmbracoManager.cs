@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using Vega.USiteBuilder.DataTypeBuilder;
-using Vega.USiteBuilder.DocumentTypeBuilder;
-using Vega.USiteBuilder.TemplateBuilder;
+﻿
 
 namespace Vega.USiteBuilder
 {
@@ -9,12 +6,22 @@ namespace Vega.USiteBuilder
     using Vega.USiteBuilder;
     using System.Collections.Generic;
     using Vega.USiteBuilder.Types;
+    using System.Linq;
+    using Vega.USiteBuilder.DataTypeBuilder;
+    using Vega.USiteBuilder.DocumentTypeBuilder;
+    using Vega.USiteBuilder.TemplateBuilder;
 
+    /// <summary>
+    /// Umbraco manager
+    /// </summary>
     public class UmbracoManager
     {
         private static string _syncObj = "sync";
         private static bool _synchronized = false;
 
+        /// <summary>
+        /// Synchronizes if not synchronized.
+        /// </summary>
         public static void SynchronizeIfNotSynchronized()
         {
             // we are not locking immediatly because it will impact performance
@@ -52,31 +59,54 @@ namespace Vega.USiteBuilder
             }
         }
 
+        /// <summary>
+        /// Synchronizes the type of the document.
+        /// </summary>
+        /// <param name="siteBuilderType">Type of the site builder.</param>
         public void SynchronizeDocumentType(Type siteBuilderType)
         {
             new DocumentTypeManager().SynchronizeDocumentType(siteBuilderType);
         }
 
+        /// <summary>
+        /// Deletes the type of the document.
+        /// </summary>
+        /// <param name="alias">The alias.</param>
         public void DeleteDocumentType(string alias)
         {
             new DocumentTypeManager().DeleteDocumentType(alias);
         }
 
+        /// <summary>
+        /// Previews the document type changes.
+        /// </summary>
+        /// <returns></returns>
         public static List<ContentComparison> PreviewDocumentTypeChanges()
         {
             return DocumentTypeComparer.PreviewDocumentTypeChanges();
         }
 
+        /// <summary>
+        /// Previews the template changes.
+        /// </summary>
+        /// <returns></returns>
         public static List<ContentComparison> PreviewTemplateChanges()
         {
             return new TemplateComparer().PreviewTemplateChanges();
         }
 
+        /// <summary>
+        /// Previews the data type changes.
+        /// </summary>
+        /// <returns></returns>
         public static List<ContentComparison> PreviewDataTypeChanges()
         {
             return new DataTypeComparer().PreviewDataTypeChanges();
         }
 
+        /// <summary>
+        /// Synchronizes all templates.
+        /// </summary>
         public static void SynchronizeAllTemplates()
         {
             lock (_syncObj)
@@ -85,6 +115,9 @@ namespace Vega.USiteBuilder
             }
         }
 
+        /// <summary>
+        /// Synchronizes all data types.
+        /// </summary>
         public static void SynchronizeAllDataTypes()
         {
             lock (_syncObj)
@@ -93,12 +126,18 @@ namespace Vega.USiteBuilder
             }
         }
 
+        /// <summary>
+        /// Cleans up document types.
+        /// </summary>
         public static void CleanUpDocumentTypes()
         {
             DocumentTypeManager docTypeManager = new DocumentTypeManager();
             docTypeManager.CleanUpDocumentTypes();
         }
 
+        /// <summary>
+        /// Synchronizes all document types.
+        /// </summary>
         public static void SynchronizeAllDocumentTypes()
         {
             lock (_syncObj)
