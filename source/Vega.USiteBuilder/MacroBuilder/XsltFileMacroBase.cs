@@ -1,4 +1,4 @@
-﻿namespace Vega.USiteBuilder
+﻿namespace Vega.USiteBuilder.MacroBuilder
 {
     /// <summary>
     /// XSLT file macro base

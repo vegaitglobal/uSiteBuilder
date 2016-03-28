@@ -1,16 +1,17 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
+﻿using System;
+using Vega.USiteBuilder.MacroBuilder;
 
+namespace Vega.USiteBuilder.WebUserControlsBuilder
+{
     /// <summary>
     /// Marks a property as a macro parameter.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class MacroParameterAttribute : Attribute
     {
         internal MacroParameterAttribute()
         {
-            this.Show = false;
+            Show = false;
         }
 
         /// <summary>
@@ -20,7 +21,7 @@
         public MacroParameterAttribute(MacroParameterType type)
             : this()
         {
-            this.Type = type;
+            Type = type;
         }
 
         /// <summary>

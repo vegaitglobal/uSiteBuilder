@@ -1,11 +1,8 @@
-﻿namespace Vega.USiteBuilder.Configuration
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Configuration;
+﻿using System;
+using System.Configuration;
 
+namespace Vega.USiteBuilder.Configuration
+{
     /// <summary>
     /// Holds uSiteBuilder configuration settings (read from web.config)
     /// </summary>

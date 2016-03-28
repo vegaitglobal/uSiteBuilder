@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Web.UI;
-using umbraco.cms.businesslogic.template;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Web.Hosting;
+using umbraco.cms.businesslogic.template;
+using Umbraco.Core;
+using Umbraco.Core.IO;
 
-namespace Vega.USiteBuilder
+namespace Vega.USiteBuilder.TemplateBuilder
 {
     internal class TemplateManager : ManagerBase
     {
         public void Synchronize()
         {
-            if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.WebForms)
+            if (Util.DefaultRenderingEngine == RenderingEngine.WebForms)
             {
                 SynchronizeTemplates(typeof(TemplateBase));
                 UpdateTemplatesTreeStructure();
@@ -67,7 +69,7 @@ namespace Vega.USiteBuilder
 
         private void SynchronizeViews()
         {
-            string viewsPath = System.Web.Hosting.HostingEnvironment.MapPath(Umbraco.Core.IO.SystemDirectories.MvcViews);
+            string viewsPath = HostingEnvironment.MapPath(SystemDirectories.MvcViews);
             if (viewsPath != null)
             {
                 DirectoryInfo viewsFolder = new DirectoryInfo(viewsPath);
@@ -78,7 +80,7 @@ namespace Vega.USiteBuilder
                     Template template = Template.GetByAlias(alias);
                     if (template == null)
                     {
-                        template = Template.MakeNew(alias, siteBuilderUser);
+                        Template.MakeNew(alias, siteBuilderUser);
                     }
                 }
             }
@@ -88,13 +90,13 @@ namespace Vega.USiteBuilder
         {
             foreach (Type typeTemplate in Util.GetFirstLevelSubTypes(typeBaseTemplate))
             {
-                if (!this.IsBaseTemplate(typeTemplate))
+                if (!IsBaseTemplate(typeTemplate))
                 {
-                    this.SynchronizeTemplate(typeTemplate);
+                    SynchronizeTemplate(typeTemplate);
                 }
 
                 // sync all children templates
-                this.SynchronizeTemplates(typeTemplate);
+                SynchronizeTemplates(typeTemplate);
             }
         }
 
@@ -114,7 +116,7 @@ namespace Vega.USiteBuilder
             Template template = Template.GetByAlias(alias);
             if (template == null)
             {
-                template = Template.MakeNew(alias, this.siteBuilderUser);
+                Template.MakeNew(alias, siteBuilderUser);
             }
         }
 
@@ -131,7 +133,7 @@ namespace Vega.USiteBuilder
 
             foreach (Template template in templates)
             {
-                string parentMasterPageName = this.GetParentMasterPageName(template);
+                string parentMasterPageName = GetParentMasterPageName(template);
 
                 if (!string.IsNullOrEmpty(parentMasterPageName) && parentMasterPageName != "default")
                 {

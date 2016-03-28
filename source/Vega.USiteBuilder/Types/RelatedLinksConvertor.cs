@@ -1,12 +1,10 @@
-﻿namespace Vega.USiteBuilder.Types
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Xml;
-    using umbraco.presentation.nodeFactory;
+﻿using System;
+using System.Collections.Generic;
+using System.Xml;
+using umbraco.presentation.nodeFactory;
 
+namespace Vega.USiteBuilder.Types
+{
     //using umbraco.NodeFactory;
 
     /// <summary>
@@ -45,14 +43,14 @@
                 if (!string.IsNullOrEmpty(inputXml))
                 {
                     XmlDocument doc = new XmlDocument();
-                    doc.LoadXml((string)inputXml);
+                    doc.LoadXml(inputXml);
 
                     foreach (XmlNode node in doc.SelectNodes("links/link"))
                     {
                         RelatedLink rl = new RelatedLink();
                         
                         rl.Title = node.Attributes["title"].Value;
-                        rl.NewWindow = node.Attributes["newwindow"].Value == "0" ? false : true;
+                        rl.NewWindow = node.Attributes["newwindow"].Value != "0";
 
                         switch (node.Attributes["type"].Value)
                         {

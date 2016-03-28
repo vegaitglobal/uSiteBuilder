@@ -1,12 +1,12 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Reflection;
+﻿using System;
+using System.Reflection;
 
+namespace Vega.USiteBuilder.DocumentTypeBuilder
+{
     /// <summary>
     /// Marks the property as a document type property
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class DocumentTypePropertyAttribute : Attribute
     {
         /// <summary>
@@ -15,12 +15,12 @@
         public DocumentTypePropertyAttribute() 
         {
             // setting up default values
-            this.Tab = "";
-            this.Mandatory = false;
-            this.ValidationRegExp = "";
-            this.Description = "";
-            this.DefaultValue = null;
-            this.Alias = "";
+            Tab = "";
+            Mandatory = false;
+            ValidationRegExp = "";
+            Description = "";
+            DefaultValue = null;
+            Alias = "";
         }
 
         /// <summary>
@@ -30,7 +30,7 @@
         /// <param name="type">Umbraco Data Type related with this property</param>
         public DocumentTypePropertyAttribute(UmbracoPropertyType type) : this()
         {
-            this.Type = type;
+            Type = type;
 
         }
 
@@ -78,31 +78,33 @@
         {
             get
             {
-                if (this.Tab == null)
+                if (Tab == null)
                 {
                     return "";
                 }
-                else if (this.Tab is Enum)
+                else
                 {
-                    // first try to see if there is TabNameAttribute related to this Enum
-                    Enum en = (Enum)this.Tab;
-                    Type type = en.GetType();
-                    MemberInfo[] memInfo = type.GetMember(en.ToString());
-                    if (memInfo != null && memInfo.Length > 0)
+                    var tab = Tab as Enum;
+                    if (tab != null)
                     {
-                        object[] attrs = memInfo[0].GetCustomAttributes(typeof(TabNameAttribute), false);
-                        if (attrs != null && attrs.Length > 0)
+                        // first try to see if there is TabNameAttribute related to this Enum
+                        Enum en = tab;
+                        Type type = en.GetType();
+                        MemberInfo[] memInfo = type.GetMember(en.ToString());
+                        if (memInfo != null && memInfo.Length > 0)
                         {
-                            return ((TabNameAttribute)attrs[0]).Name;
+                            object[] attrs = memInfo[0].GetCustomAttributes(typeof(TabNameAttribute), false);
+                            if (attrs != null && attrs.Length > 0)
+                            {
+                                return ((TabNameAttribute)attrs[0]).Name;
+                            }
                         }
+
+                        // if not, just return Enum name
+                        return en.ToString();
                     }
 
-                    // if not, just return Enum name
-                    return en.ToString();
-                }
-                else //this.Tab is String or something else
-                {
-                    return this.Tab.ToString();
+                    return Tab.ToString();
                 }
             }
         }
@@ -114,14 +116,13 @@
         {
             get
             {
-                if (this.Tab != null && this.Tab is Enum)
+                var tab = Tab as Enum;
+                if (tab != null)
                 {
-                    return Convert.ToInt32((Enum)this.Tab);
+                    return Convert.ToInt32(tab);
                 }
-                else
-                {
-                    return null;
-                }
+
+                return null;
             }
         }
 

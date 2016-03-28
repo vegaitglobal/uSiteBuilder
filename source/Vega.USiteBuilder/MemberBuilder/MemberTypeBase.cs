@@ -1,13 +1,10 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using umbraco.cms.businesslogic.member;
-using System.Web.Security;
-    using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
+using System.Text;
+using umbraco.cms.businesslogic.member;
 
+namespace Vega.USiteBuilder.MemberBuilder
+{
     /// <summary>
     /// Base class for member types
     /// </summary>
@@ -19,12 +16,11 @@ using System.Web.Security;
         /// <param name="loginName">Member login name. Can be email</param>
         /// <param name="email">The email.</param>
         /// <param name="password">Member password</param>
-        public MemberTypeBase(string loginName, string email, string password)
+        protected MemberTypeBase(string loginName, string email, string password)
         {
-            this.LoginName = loginName;
-            this.Password = password;
-            this.Email = email;
-            
+            LoginName = loginName;
+            Password = password;
+            Email = email;
         }
 
         /// <summary>
@@ -33,7 +29,7 @@ using System.Web.Security;
         /// <param name="newHashedPassword">The new hashed password.</param>
         public void ChangePassword(string newHashedPassword)
         {
-            Member member = new Member(this.Id);
+            Member member = new Member(Id);
 
             member.ChangePassword(newHashedPassword);
         }
@@ -44,11 +40,10 @@ using System.Web.Security;
         /// <param name="newPlainPassword">Plain password text</param>
         public void ChangeAndHashPassword(string newPlainPassword)
         {
-            HMACSHA1 hash = new HMACSHA1();
-            hash.Key = Encoding.Unicode.GetBytes(newPlainPassword);
+            HMACSHA1 hash = new HMACSHA1 { Key = Encoding.Unicode.GetBytes(newPlainPassword) };
             string hashedPassword = Convert.ToBase64String(hash.ComputeHash(Encoding.Unicode.GetBytes(newPlainPassword)));
 
-            this.ChangePassword(hashedPassword);
+            ChangePassword(hashedPassword);
         }
 
         /// <summary>
@@ -58,7 +53,7 @@ using System.Web.Security;
         {
             MemberHelper.Save(this);
         }
-    
+
         /// <summary>
         /// Member id
         /// </summary>

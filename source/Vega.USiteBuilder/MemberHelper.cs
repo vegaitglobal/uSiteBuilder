@@ -1,17 +1,17 @@
-﻿namespace Vega.USiteBuilder
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Web;
+using System.Web.Security;
+using umbraco.BusinessLogic;
+using umbraco.cms.businesslogic.member;
+using umbraco.cms.businesslogic.property;
+using Vega.USiteBuilder.DocumentTypeBuilder;
+using Vega.USiteBuilder.MemberBuilder;
+
+namespace Vega.USiteBuilder
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-    using System.Web;
-    using System.Web.Security;
-
-    using umbraco.BusinessLogic;
-    using umbraco.cms.businesslogic.member;
-
-    using Vega.USiteBuilder.Types;
-
     /// <summary>
     /// This class contains methods for getting the strongly typed members from Umbraco
     /// </summary>
@@ -25,7 +25,7 @@
         /// <param name="member">Content item to update/add</param>
         public static void Save(MemberTypeBase member)
         {
-            MemberHelper.Save(member, Util.GetAdminUser());
+            Save(member, Util.GetAdminUser());
         }
 
         /// <summary>
@@ -51,7 +51,7 @@
             Member umember;
             if (member.Id == 0) // member is new so create Member
             {
-                umember = Member.MakeNew(member.LoginName, member.Email, memberType, user);
+                Member.MakeNew(member.LoginName, member.Email, memberType, user);
 
                 // reload
                 umember = Member.GetMemberFromLoginName(member.LoginName);
@@ -78,7 +78,7 @@
                 string propertyAlias;
                 MemberTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-                umbraco.cms.businesslogic.property.Property property = umember.getProperty(propertyAlias);
+                Property property = umember.getProperty(propertyAlias);
                 if (property == null)
                 {
                     throw new Exception(string.Format("Property '{0}' not found in this node: {1}. Content type: {2}.",
@@ -112,7 +112,7 @@
 
             foreach (Member member in members)
             {
-                MemberTypeBase m = MemberHelper.GetMember(member);
+                MemberTypeBase m = GetMember(member);
                 if (m != null)
                 {
                     retVal.Add(m);
@@ -128,7 +128,7 @@
         /// <returns></returns>
         public static MemberTypeBase GetCurrentMember()
         {
-            return MemberHelper.GetMember(Member.GetCurrentMember());
+            return GetMember(Member.GetCurrentMember());
         }
 
         /// <summary>
@@ -139,20 +139,9 @@
         /// <returns></returns>
         public static List<MemberTypeBase> GetMembersByName(string usernameToMatch, bool matchByNameInsteadOfLogin)
         {
-            List<MemberTypeBase> retVal = new List<MemberTypeBase>();
-
             Member[] members = Member.GetMemberByName(usernameToMatch, matchByNameInsteadOfLogin);
 
-            foreach (Member member in members)
-            {
-                MemberTypeBase m = MemberHelper.GetMember(member);
-                if (m != null)
-                {
-                    retVal.Add(m);
-                }
-            }
-
-            return retVal;
+            return members.Select(GetMember).Where(m => m != null).ToList();
         }
 
         /// <summary>
@@ -162,7 +151,7 @@
         /// <returns>Member or null if not member with given email is not found</returns>
         public static MemberTypeBase GetMemberFromEmail(string email)
         {
-            return MemberHelper.GetMember(Member.GetMemberFromEmail(email));
+            return GetMember(Member.GetMemberFromEmail(email));
         }
 
         /// <summary>
@@ -173,7 +162,7 @@
         /// <returns>Member found or null if no members are found</returns>
         public static MemberTypeBase GetMemberFromLoginAndEncodedPassword(string loginName, string password)
         {
-            return MemberHelper.GetMember(Member.GetMemberFromLoginAndEncodedPassword(loginName, password));
+            return GetMember(Member.GetMemberFromLoginAndEncodedPassword(loginName, password));
         }
 
         /// <summary>
@@ -183,7 +172,7 @@
         /// <returns>Member or null if member is not found</returns>
         public static MemberTypeBase GetMemberFromLoginName(string loginName)
         {
-            return MemberHelper.GetMember(Member.GetMemberFromLoginName(loginName));
+            return GetMember(Member.GetMemberFromLoginName(loginName));
         }
 
         /// <summary>
@@ -194,7 +183,7 @@
         /// <returns>Member or null if no members are founds</returns>
         public static MemberTypeBase GetMemberFromLoginNameAndPassword(string loginName, string password)
         {
-            return MemberHelper.GetMember(Member.GetMemberFromLoginNameAndPassword(loginName, password));
+            return GetMember(Member.GetMemberFromLoginNameAndPassword(loginName, password));
         }
 
         /// <summary>
@@ -218,7 +207,7 @@
 
             if (member != null)
             {
-                retVal = MemberHelper.GetMember(member);
+                retVal = GetMember(member);
             }
 
             return retVal;
@@ -246,7 +235,7 @@
             Type typeMemberType = MemberTypeManager.GetMemberTypeType(member.ContentType.Alias);
             if (typeMemberType != null)
             {
-                retVal = ((MemberTypeBase)Activator.CreateInstance(typeMemberType, new object[] { member.LoginName, member.Email, member.Password }));
+                retVal = ((MemberTypeBase)Activator.CreateInstance(typeMemberType, member.LoginName, member.Email, member.Password));
 
                 if (retVal == null)
                 {
@@ -271,7 +260,7 @@
                     string propertyAlias;
                     MemberTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-                    umbraco.cms.businesslogic.property.Property property = member.getProperty(propertyAlias);
+                    Property property = member.getProperty(propertyAlias);
 
                     object value = null;
                     try
@@ -280,7 +269,7 @@
                         {
                             value = null;
                         }
-                        else if (propInfo.PropertyType.Equals(typeof(System.Boolean)))
+                        else if (propInfo.PropertyType == typeof(Boolean))
                         {
                             if (property.Value == null || String.IsNullOrEmpty(Convert.ToString(property.Value)) 
                                 || Convert.ToString(property.Value) == "0")
@@ -300,13 +289,10 @@
                         else if (propInfo.PropertyType.IsGenericType &&
                                  propInfo.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                         {
-                            if (String.IsNullOrEmpty(Convert.ToString(property.Value)))
+                            if (!String.IsNullOrEmpty(Convert.ToString(property.Value)))
                             {
-                                value = null;
-                            }
-                            else
-                            {
-                                value = Convert.ChangeType(property.Value, Nullable.GetUnderlyingType(propInfo.PropertyType));
+                                value = Convert.ChangeType(property.Value,
+                                    Nullable.GetUnderlyingType(propInfo.PropertyType));
                             }
 
                             // TODO: If data type is DateTime and is nullable and is less than 1.1.1000 than set it to NULL
@@ -373,7 +359,6 @@
         public static void LoginWithFormsAuthentication(string username, bool rememberMe, int timeOut, bool redirectAfterAuthentication)
         {
             DateTime expirationDate = DateTime.Now.AddMinutes(timeOut);
-            TimeSpan expirationTime = expirationDate - DateTime.Now;
 
             FormsAuthenticationTicket ticket = new FormsAuthenticationTicket(username, rememberMe, timeOut);
 

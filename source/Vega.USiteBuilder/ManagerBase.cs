@@ -1,17 +1,17 @@
-﻿using System.Web;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Web;
+using umbraco.BusinessLogic;
+using umbraco.cms.businesslogic;
+using umbraco.cms.businesslogic.datatype;
+using umbraco.cms.businesslogic.propertytype;
+using Vega.USiteBuilder.DataTypeBuilder;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
 namespace Vega.USiteBuilder
 {
-    using System;
-    using System.Linq;
-    using System.Collections.Generic;
-
-    using umbraco.BusinessLogic;
-    using System.Reflection;
-    using umbraco.cms.businesslogic;
-    using umbraco.cms.businesslogic.datatype;
-    using umbraco.cms.businesslogic.propertytype;
-
     /// <summary>
     /// Base class for all managers
     /// </summary>
@@ -20,9 +20,9 @@ namespace Vega.USiteBuilder
         protected User siteBuilderUser = Util.GetSiteBuilderUmbracoUser();
 
         // string = name, Type = synchronized type
-        private Dictionary<string, Type> _synchronizedNames = new Dictionary<string, Type>();
+        private readonly Dictionary<string, Type> _synchronizedNames = new Dictionary<string, Type>();
         // string = alias, Type = synchronized type
-        private Dictionary<string, Type> _synchronizedAliases = new Dictionary<string, Type>();
+        private readonly Dictionary<string, Type> _synchronizedAliases = new Dictionary<string, Type>();
 
         /// <summary>
         /// This method checks if an item with the given name and alias is already synchronized.
@@ -38,29 +38,29 @@ namespace Vega.USiteBuilder
                 // check name
                 if (!string.IsNullOrEmpty(name))
                 {
-                    if (this._synchronizedNames.ContainsKey(name))
+                    if (_synchronizedNames.ContainsKey(name))
                     {
-                        throw new ArgumentException(this.GetExceptionText(name, alias, typeSynced));
+                        throw new ArgumentException(GetExceptionText(name, alias, typeSynced));
                     }
                     else
                     {
-                        this._synchronizedNames.Add(name, typeSynced);
+                        _synchronizedNames.Add(name, typeSynced);
                     }
                 }
 
                 // check alias
-                if (this._synchronizedAliases.ContainsKey(alias))
+                if (_synchronizedAliases.ContainsKey(alias))
                 {
-                    throw new ArgumentException(this.GetExceptionText(name, alias, typeSynced));
+                    throw new ArgumentException(GetExceptionText(name, alias, typeSynced));
                 }
                 else
                 {
-                    this._synchronizedAliases.Add(alias, typeSynced);
+                    _synchronizedAliases.Add(alias, typeSynced);
                 }
             }
             catch
             {
-                throw new ArgumentException(this.GetExceptionText(name, alias, typeSynced));
+                throw new ArgumentException(GetExceptionText(name, alias, typeSynced));
             }
         }
 
@@ -69,14 +69,14 @@ namespace Vega.USiteBuilder
             string retVal = "";
             retVal += string.Format("Alias/Name duplicated ({0}/{1}). Type causing problem: '{2}'. Already synchronized types are:\n", alias, name, type.FullName);
 
-            foreach (KeyValuePair<string, Type> syncedAlias in this._synchronizedAliases)
+            foreach (KeyValuePair<string, Type> syncedAlias in _synchronizedAliases)
             {
                 // get the name by using the type from synced aliases
                 string typeName = "";
 
-                if (this._synchronizedNames.ContainsValue(syncedAlias.Value))
+                if (_synchronizedNames.ContainsValue(syncedAlias.Value))
                 {
-                    typeName = this._synchronizedNames.First(sn => sn.Value == syncedAlias.Value).Key;
+                    typeName = _synchronizedNames.First(sn => sn.Value == syncedAlias.Value).Key;
                 }
 
                 retVal += string.Format("Alias: {0}, Name: {1}, Type: {2}, Assembly: {3}\n",
@@ -123,7 +123,7 @@ namespace Vega.USiteBuilder
                 string propertyAlias;
                 DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-                if (this.RemoveIfObsolete(contentType, propInfo, propertyAlias))
+                if (RemoveIfObsolete(contentType, propInfo, propertyAlias))
                 {
                     continue; // skip this property as it's obsolete
                 }
@@ -291,7 +291,10 @@ namespace Vega.USiteBuilder
             }
             else
             {
-                dataTypeDefinition = DataTypeDefinition.GetDataTypeDefinition((int)propAttr.Type);
+                if (propAttr.Type.HasValue)
+                {
+                    dataTypeDefinition = DataTypeDefinition.GetDataTypeDefinition((int) propAttr.Type);
+                }
             }
             return dataTypeDefinition;
         }

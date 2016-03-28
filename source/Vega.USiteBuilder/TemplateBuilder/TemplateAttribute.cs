@@ -1,12 +1,11 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.ComponentModel;
+﻿using System;
 
+namespace Vega.USiteBuilder.TemplateBuilder
+{
     /// <summary>
     /// Sets the template properties.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class TemplateAttribute :  Attribute
     {
         /// <summary>
@@ -14,7 +13,7 @@
         /// </summary>
         public TemplateAttribute()
         {
-            this.AllowedForDocumentType = true;
+            AllowedForDocumentType = true;
         }
 
         /// <summary>

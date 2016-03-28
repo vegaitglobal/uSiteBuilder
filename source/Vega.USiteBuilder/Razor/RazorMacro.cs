@@ -1,10 +1,7 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
+﻿using Vega.USiteBuilder.MacroBuilder;
 
+namespace Vega.USiteBuilder.Razor
+{
     internal class RazorMacro : MacroDefinition
     {
         public string ScriptFilePath { get; set; }

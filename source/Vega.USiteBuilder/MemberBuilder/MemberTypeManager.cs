@@ -1,15 +1,14 @@
-﻿namespace Vega.USiteBuilder
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using umbraco.cms.businesslogic;
+using umbraco.cms.businesslogic.member;
+using umbraco.cms.businesslogic.property;
+using Vega.USiteBuilder.Configuration;
+using Vega.USiteBuilder.DocumentTypeBuilder;
+
+namespace Vega.USiteBuilder.MemberBuilder
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-
-    using umbraco.cms.businesslogic;
-    using umbraco.cms.businesslogic.datatype;
-    using umbraco.cms.businesslogic.member;
-    using umbraco.cms.businesslogic.propertytype;
-
     /// <summary>
     /// Manages member type synchronization
     /// </summary>
@@ -17,10 +16,10 @@
     {
         // Holds all members types found in 
         // Type = Member type type (subclass of MemberTypeBase), string = member type alias
-        private static Dictionary<string, Type> _memberTypes = new Dictionary<string, Type>();
+        private static readonly Dictionary<string, Type> _memberTypes = new Dictionary<string, Type>();
 
         // indicates if any of synced member types had a default value
-        private bool _hadDefaultValues = false;
+        private bool _hadDefaultValues;
 
         /// <summary>
         /// Returns true if there's any member type synchronized (defined)
@@ -35,19 +34,19 @@
         {
             _memberTypes.Clear();
 
-            this.SynchronizeMemberTypes(typeof(MemberTypeBase));
+            SynchronizeMemberTypes(typeof(MemberTypeBase));
 
-            if (this._hadDefaultValues) // if there were default values set subscribe to News event in which we'll set default values.
+            if (_hadDefaultValues) // if there were default values set subscribe to News event in which we'll set default values.
             {
                 // subscribe to New event
                 //Member.AfterNew += new Member.NewEventHandler(this.Member_New);
-                Member.New += new Member.NewEventHandler(this.Member_New);
+                Member.New += Member_New;
             }
         }
 
         void Member_New(Member member, NewEventArgs e)
         {
-            Type typeMemberType = MemberTypeManager.GetMemberTypeType(member.ContentType.Alias);
+            Type typeMemberType = GetMemberTypeType(member.ContentType.Alias);
             foreach (PropertyInfo propInfo in typeMemberType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 MemberTypePropertyAttribute propAttr = Util.GetAttribute<MemberTypePropertyAttribute>(propInfo);
@@ -58,13 +57,13 @@
 
                 string propertyName;
                 string propertyAlias;
-                MemberTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
+                ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
                 if (propAttr.DefaultValue != null)
                 {
                     try
                     {
-                        umbraco.cms.businesslogic.property.Property property = member.getProperty(propertyAlias);
+                        Property property = member.getProperty(propertyAlias);
                         property.Value = propAttr.DefaultValue;
                     }
                     catch (Exception exc)
@@ -114,16 +113,16 @@
 
         public static MemberType GetMemberType(Type typeMemberType)
         {
-            return MemberType.GetByAlias(MemberTypeManager.GetMemberTypeAlias(typeMemberType));
+            return MemberType.GetByAlias(GetMemberTypeAlias(typeMemberType));
         }
 
         public static Type GetMemberTypeType(string memberTypeAlias)
         {
             Type retVal = null;
 
-            if (MemberTypeManager._memberTypes.ContainsKey(memberTypeAlias))
+            if (_memberTypes.ContainsKey(memberTypeAlias))
             {
-                retVal = MemberTypeManager._memberTypes[memberTypeAlias];
+                retVal = _memberTypes[memberTypeAlias];
             }
 
             return retVal;
@@ -135,20 +134,20 @@
         {
             foreach (Type typeMemberType in Util.GetFirstLevelSubTypes(basetypeMemberType))
             {
-                this.SynchronizeMemberType(typeMemberType, basetypeMemberType);
+                SynchronizeMemberType(typeMemberType);
             }
         }
 
-        private void SynchronizeMemberType(Type typeMemberType, Type basetypeMemberType)
+        private void SynchronizeMemberType(Type typeMemberType)
         {
-            MemberTypeAttribute memberTypeAttr = this.GetMemberTypeAttribute(typeMemberType);
+            MemberTypeAttribute memberTypeAttr = GetMemberTypeAttribute(typeMemberType);
 
             string memberTypeName = string.IsNullOrEmpty(memberTypeAttr.Name) ? typeMemberType.Name : memberTypeAttr.Name;
-            string memberTypeAlias = MemberTypeManager.GetMemberTypeAlias(typeMemberType);
+            string memberTypeAlias = GetMemberTypeAlias(typeMemberType);
 
             try
             {
-                this.AddToSynchronized(typeMemberType.Name, memberTypeAlias, typeMemberType);
+                AddToSynchronized(typeMemberType.Name, memberTypeAlias, typeMemberType);
             }
             catch (ArgumentException exc)
             {
@@ -156,16 +155,12 @@
                     memberTypeAlias, typeMemberType.FullName, typeMemberType.Assembly.FullName, exc.Message));
             }
 
-            if (!Configuration.USiteBuilderConfiguration.SuppressSynchronization)
+            if (!USiteBuilderConfiguration.SuppressSynchronization)
             {
-                MemberTypeManager._memberTypes.Add(memberTypeAlias, typeMemberType);
+                _memberTypes.Add(memberTypeAlias, typeMemberType);
 
-                MemberType memberType = MemberType.GetByAlias(memberTypeAlias);
-                if (memberType == null)
-                {
-                    // if name is not set, use name of the type
-                    memberType = MemberType.MakeNew(this.siteBuilderUser, memberTypeName);
-                }
+                MemberType memberType = MemberType.GetByAlias(memberTypeAlias) ??
+                                        MemberType.MakeNew(siteBuilderUser, memberTypeName);
 
                 memberType.Text = memberTypeName;
                 memberType.Alias = memberTypeAlias;
@@ -175,7 +170,7 @@
 
                 memberType.MasterContentType = 0;
 
-                this.SynchronizeMemberTypeProperties(typeMemberType, memberType);
+                SynchronizeMemberTypeProperties(typeMemberType, memberType);
 
                 memberType.Save();
             }
@@ -188,12 +183,8 @@
         /// <returns></returns>
         private MemberTypeAttribute GetMemberTypeAttribute(Type typeMemberType)
         {
-            MemberTypeAttribute retVal = Util.GetAttribute<MemberTypeAttribute>(typeMemberType);
-
-            if (retVal == null)
-            {
-                retVal = this.CreateDefaultMemberTypeAttribute(typeMemberType);
-            }
+            MemberTypeAttribute retVal = Util.GetAttribute<MemberTypeAttribute>(typeMemberType) ??
+                                         CreateDefaultMemberTypeAttribute(typeMemberType);
 
             return retVal;
         }
@@ -213,7 +204,7 @@
         #region [Member type properties synchronization]
         private void SynchronizeMemberTypeProperties(Type typeMemberType, MemberType memberType)
         {
-            this.SynchronizeContentTypeProperties(typeMemberType, memberType, out this._hadDefaultValues);            
+            SynchronizeContentTypeProperties(typeMemberType, memberType, out _hadDefaultValues);            
         }
         #endregion
     }

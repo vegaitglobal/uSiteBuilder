@@ -1,14 +1,16 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System.Web;
-    using umbraco.presentation.nodeFactory;
+﻿using System.Web;
+using System.Web.UI;
+using umbraco.presentation.nodeFactory;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
+namespace Vega.USiteBuilder.WebUserControlsBuilder
+{
     //using umbraco.NodeFactory;
 
     /// <summary>
     /// Base class for untyped web user controls.
     /// </summary>
-    public abstract class WebUserControlBase : System.Web.UI.UserControl
+    public abstract class WebUserControlBase : UserControl
     {
     }
 
@@ -19,7 +21,7 @@
         where T : DocumentTypeBase, new()
     {
         private int? _contentNodeId;
-        private T _currentContent = null;
+        private T _currentContent;
 
         /// <summary>
         /// Gets or sets the content node id of a content associated with this control.
@@ -29,16 +31,16 @@
         {
             get
             {
-                if (!this._contentNodeId.HasValue)
+                if (!_contentNodeId.HasValue)
                 {
-                    this._contentNodeId = Node.GetCurrent().Id;
+                    _contentNodeId = Node.GetCurrent().Id;
                 }
 
-                return (int)this._contentNodeId;
+                return (int)_contentNodeId;
             }
             set
             {
-                this._contentNodeId = value;
+                _contentNodeId = value;
             }
         }
 
@@ -49,17 +51,17 @@
         {
             get
             {
-                if (this._currentContent == null)
+                if (_currentContent == null)
                 {
-                    if (!HttpContext.Current.Items.Contains(this.ContentNodeId))
+                    if (!HttpContext.Current.Items.Contains(ContentNodeId))
                     {
-                        HttpContext.Current.Items.Add(this.ContentNodeId, ContentHelper.GetByNodeId<T>(this.ContentNodeId));
+                        HttpContext.Current.Items.Add(ContentNodeId, ContentHelper.GetByNodeId<T>(ContentNodeId));
                     }
 
-                    this._currentContent = (T)HttpContext.Current.Items[this.ContentNodeId];
+                    _currentContent = (T)HttpContext.Current.Items[ContentNodeId];
                 }
 
-                return this._currentContent;
+                return _currentContent;
             }
         }
     }

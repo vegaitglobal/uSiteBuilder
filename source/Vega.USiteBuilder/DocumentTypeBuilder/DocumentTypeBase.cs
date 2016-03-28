@@ -1,14 +1,10 @@
-﻿using System.Linq;
-using Umbraco.Core.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using umbraco.BusinessLogic;
 using umbraco.MacroEngines;
-using umbraco.NodeFactory;
 
-namespace Vega.USiteBuilder
+namespace Vega.USiteBuilder.DocumentTypeBuilder
 {
-    using System;
-    using System.Collections.Generic;
-    using umbraco.BusinessLogic;
-
     /// <summary>
     /// Base class for all document types.
     /// </summary>
@@ -17,7 +13,7 @@ namespace Vega.USiteBuilder
         /// <summary>
         /// Initializes a new instance of the <see cref="DocumentTypeBase"/> class.
         /// </summary>
-        public DocumentTypeBase()
+        protected DocumentTypeBase()
         {
         }
 
@@ -40,7 +36,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public T TypedAncestorOrSelf<T>() where T : DocumentTypeBase, new()
         {
-            DynamicNode ancestorOrSelf = this.AncestorOrSelf(DocumentTypeManager.GetDocumentTypeAlias(typeof (T)));
+            DynamicNode ancestorOrSelf = AncestorOrSelf(DocumentTypeManager.GetDocumentTypeAlias(typeof (T)));
 
             return ContentHelper.GetByNodeId<T>(ancestorOrSelf.Id);
         }
@@ -63,7 +59,7 @@ namespace Vega.USiteBuilder
         public IEnumerable<T> TypedChildren<T>() where T : DocumentTypeBase, new()
         {
             var documentTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeof (T));
-            IEnumerable<DynamicNode> descendants = this.ChildrenAsList.Where(c => c.NodeTypeAlias == documentTypeAlias);
+            IEnumerable<DynamicNode> descendants = ChildrenAsList.Where(c => c.NodeTypeAlias == documentTypeAlias);
 
             return descendants.Select(d => ContentHelper.GetByNodeId<T>(d.Id));
         }
@@ -77,7 +73,7 @@ namespace Vega.USiteBuilder
         public List<T> GetChildren<T>(bool deepGet)
             where T : DocumentTypeBase, new()
         {
-            return ContentHelper.GetChildren<T>(this.Id, deepGet);
+            return ContentHelper.GetChildren<T>(Id, deepGet);
         }
 
         /// <summary>
@@ -88,7 +84,7 @@ namespace Vega.USiteBuilder
         public List<T> GetChildren<T>()
             where T : DocumentTypeBase, new()
         {
-            return ContentHelper.GetChildren<T>(this.Id);
+            return ContentHelper.GetChildren<T>(Id);
         }
 
         /// <summary>
@@ -97,7 +93,7 @@ namespace Vega.USiteBuilder
         /// </summary>
         public List<DocumentTypeBase> GetChildren()
         {
-            return ContentHelper.GetChildren(this.Id);
+            return ContentHelper.GetChildren(Id);
         }
 
         /// <summary>
@@ -107,7 +103,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public List<DocumentTypeBase> GetChildren(bool deepGet)
         {
-            return ContentHelper.GetChildren(this.Id);
+            return ContentHelper.GetChildren(Id);
         }
 
                 /// <summary>

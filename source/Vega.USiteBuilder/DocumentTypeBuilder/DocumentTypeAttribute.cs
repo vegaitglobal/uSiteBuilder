@@ -1,12 +1,11 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.ComponentModel;
+﻿using System;
 
+namespace Vega.USiteBuilder.DocumentTypeBuilder
+{
     /// <summary>
     /// Provides access to various Umbraco properties of this document type.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class DocumentTypeAttribute : Attribute
     {
         /// <summary>
@@ -15,9 +14,9 @@
         public DocumentTypeAttribute()
         {
             // setting up default values
-            this.IconUrl = DocumentTypeDefaultValues.IconUrl;
-            this.Thumbnail = DocumentTypeDefaultValues.Thumbnail;
-            this.Description = "";
+            IconUrl = DocumentTypeDefaultValues.IconUrl;
+            Thumbnail = DocumentTypeDefaultValues.Thumbnail;
+            Description = "";
         }
 
         /// <summary>
@@ -72,16 +71,10 @@
             {
                 string retVal = null;
 
-                if (this.DefaultTemplate != null)
+                if (DefaultTemplate != null)
                 {
-                    if (this.DefaultTemplate is Type)
-                    {
-                        retVal = ((Type)this.DefaultTemplate).Name;
-                    }
-                    else
-                    {
-                        retVal = this.DefaultTemplate.ToString();
-                    }
+                    var type = DefaultTemplate as Type;
+                    retVal = type != null ? type.Name : DefaultTemplate.ToString();
                 }
 
                 return retVal;

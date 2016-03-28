@@ -1,6 +1,4 @@
-﻿using umbraco.cms.businesslogic.datatype;
-
-namespace Vega.USiteBuilder
+﻿namespace Vega.USiteBuilder.DataTypeBuilder
 {
 	/// <summary>
 	/// Base class for DataTypes.

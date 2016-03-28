@@ -1,4 +1,4 @@
-﻿namespace Vega.USiteBuilder
+﻿namespace Vega.USiteBuilder.MacroBuilder
 {
     /// <summary>
     /// Enumerates all macro parameter types

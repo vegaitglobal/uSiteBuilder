@@ -1,15 +1,15 @@
-﻿using umbraco.DataLayer;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using umbraco.cms.businesslogic;
+using umbraco.cms.businesslogic.template;
+using umbraco.cms.businesslogic.web;
+using umbraco.DataLayer;
+using Vega.USiteBuilder.TemplateBuilder;
 
-namespace Vega.USiteBuilder
+namespace Vega.USiteBuilder.DocumentTypeBuilder
 {
-    using System;
-    using System.Linq;
-    using System.Reflection;
-    using System.Collections.Generic;
-    using umbraco.cms.businesslogic;
-    using umbraco.cms.businesslogic.template;
-    using umbraco.cms.businesslogic.web;
-
     /// <summary>
     /// Manages document types synchronization
     /// </summary>
@@ -17,10 +17,10 @@ namespace Vega.USiteBuilder
     {
         // Holds all document types found in 
         // Type = Document type type (subclass of DocumentTypeBase), string = document type alias
-        private static Dictionary<string, Type> _documentTypes = new Dictionary<string, Type>();
+        private static readonly Dictionary<string, Type> DocumentTypes = new Dictionary<string, Type>();
 
         // indicates if any of synced document types had a default value
-        private bool _hadDefaultValues = false;
+        private bool _hadDefaultValues;
 
         /// <summary>
         /// Returns true if there's any document type synchronized (defined)
@@ -28,12 +28,12 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static bool HasSynchronizedDocumentTypes()
         {
-            return _documentTypes.Count > 0;
+            return DocumentTypes.Count > 0;
         }
 
         public void SynchronizeDocumentType(Type siteBuilderType)
         {
-            _documentTypes.Clear();
+            DocumentTypes.Clear();
 
             SynchronizeDocumentType(siteBuilderType, siteBuilderType.BaseType);
 
@@ -59,13 +59,13 @@ namespace Vega.USiteBuilder
 
         public void Synchronize()
         {
-            _documentTypes.Clear();
+            DocumentTypes.Clear();
 
-            this.SynchronizeDocumentTypes(typeof(DocumentTypeBase));
-            this.SynchronizeAllowedChildContentTypes(typeof(DocumentTypeBase));
-            this.SynchronizeReverseAllowedChildContentTypes(typeof(DocumentTypeBase));
+            SynchronizeDocumentTypes(typeof(DocumentTypeBase));
+            SynchronizeAllowedChildContentTypes(typeof(DocumentTypeBase));
+            SynchronizeReverseAllowedChildContentTypes();
 
-            if (this._hadDefaultValues) // if there were default values set subscribe to News event in which we'll set default values.
+            if (_hadDefaultValues) // if there were default values set subscribe to News event in which we'll set default values.
             {
                 // subscribe to New event
                 Document.New += Document_New;
@@ -76,7 +76,7 @@ namespace Vega.USiteBuilder
         #region [Document_New]
         void Document_New(Document document, NewEventArgs e)
         {
-            Type typeDocType = DocumentTypeManager.GetDocumentTypeType(document.ContentType.Alias);
+            Type typeDocType = GetDocumentTypeType(document.ContentType.Alias);
             if (typeDocType != null)
             {
                 foreach (PropertyInfo propInfo in typeDocType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
@@ -89,7 +89,7 @@ namespace Vega.USiteBuilder
 
                     string propertyName;
                     string propertyAlias;
-                    DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
+                    ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
                     if (propAttr.DefaultValue != null)
                     {
@@ -111,18 +111,9 @@ namespace Vega.USiteBuilder
         #region [Static methods]
         public static string GetDocumentTypeAlias(Type typeDocType)
         {
-            string alias;
-
             DocumentTypeAttribute docTypeAttr = GetDocumentTypeAttribute(typeDocType);
 
-            if (!String.IsNullOrEmpty(docTypeAttr.Alias))
-            {
-                alias = docTypeAttr.Alias;
-            }
-            else
-            {
-                alias = typeDocType.Name;
-            }
+            var alias = !String.IsNullOrEmpty(docTypeAttr.Alias) ? docTypeAttr.Alias : typeDocType.Name;
             /*
             if (alias == "File" || alias == "Folder" || alias == "Image") // These are reserved Document type names
             {
@@ -167,7 +158,7 @@ namespace Vega.USiteBuilder
 
         public static DocumentType GetDocumentType(Type typeDocType)
         {
-            return DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(typeDocType));
+            return DocumentType.GetByAlias(GetDocumentTypeAlias(typeDocType));
         }
 
 
@@ -180,9 +171,9 @@ namespace Vega.USiteBuilder
 
             Type retVal = null;
 
-            if (_documentTypes.ContainsKey(documentTypeAlias))
+            if (DocumentTypes.ContainsKey(documentTypeAlias))
             {
-                retVal = _documentTypes[documentTypeAlias];
+                retVal = DocumentTypes[documentTypeAlias];
             }
 
             return retVal;
@@ -196,7 +187,7 @@ namespace Vega.USiteBuilder
             foreach (Type typeDocType in Util.GetFirstLevelSubTypes(baseTypeDocType))
             {
                 string docTypeAlias = GetDocumentTypeAlias(typeDocType);
-                _documentTypes.Add(docTypeAlias, typeDocType);
+                DocumentTypes.Add(docTypeAlias, typeDocType);
 
                 // create all children document types
                 FillDocumentTypes(typeDocType);
@@ -208,19 +199,19 @@ namespace Vega.USiteBuilder
         {
             foreach (Type typeDocType in Util.GetFirstLevelSubTypes(baseTypeDocType))
             {
-                this.SynchronizeDocumentType(typeDocType, baseTypeDocType);
+                SynchronizeDocumentType(typeDocType, baseTypeDocType);
 
                 // create all children document types
-                this.SynchronizeDocumentTypes(typeDocType);
+                SynchronizeDocumentTypes(typeDocType);
             }
         }
 
         private void SynchronizeDocumentType(Type typeDocType, Type baseTypeDocType)
         {
-            DocumentTypeAttribute docTypeAttr = DocumentTypeManager.GetDocumentTypeAttribute(typeDocType);
+            DocumentTypeAttribute docTypeAttr = GetDocumentTypeAttribute(typeDocType);
 
             string docTypeName = string.IsNullOrEmpty(docTypeAttr.Name) ? typeDocType.Name : docTypeAttr.Name;
-            string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeDocType);
+            string docTypeAlias = GetDocumentTypeAlias(typeDocType);
 
             try
             {
@@ -232,14 +223,10 @@ namespace Vega.USiteBuilder
                     docTypeAlias, typeDocType.FullName, typeDocType.Assembly.FullName, exc.Message));
             }
 
-            _documentTypes.Add(docTypeAlias, typeDocType);
+            DocumentTypes.Add(docTypeAlias, typeDocType);
 
-            DocumentType docType = DocumentType.GetByAlias(docTypeAlias);
-            if (docType == null)
-            {
-                // if name is not set, use name of the type
-                docType = DocumentType.MakeNew(this.siteBuilderUser, docTypeName);
-            }
+            DocumentType docType = DocumentType.GetByAlias(docTypeAlias) ??
+                                   DocumentType.MakeNew(siteBuilderUser, docTypeName);
 
             docType.Text = docTypeName;
             docType.Alias = docTypeAlias;
@@ -253,12 +240,12 @@ namespace Vega.USiteBuilder
             }
             else
             {
-                docType.MasterContentType = DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(baseTypeDocType)).Id;
+                docType.MasterContentType = DocumentType.GetByAlias(GetDocumentTypeAlias(baseTypeDocType)).Id;
             }
 
-            this.SetAllowedTemplates(docType, docTypeAttr, typeDocType);
+            SetAllowedTemplates(docType, docTypeAttr, typeDocType);
 
-            this.SynchronizeDocumentTypeProperties(typeDocType, docType);
+            SynchronizeDocumentTypeProperties(typeDocType, docType);
 
             docType.Save();
         }
@@ -271,7 +258,7 @@ namespace Vega.USiteBuilder
             {
                 docType.allowedTemplates = allowedTemplates.ToArray();
             }
-            catch (SqlHelperException e)
+            catch (SqlHelperException)
             {
                 throw new Exception(string.Format("Sql error setting templates for doc type '{0}' with templates '{1}'",
                     GetDocumentTypeAlias(typeDocType), string.Join(", ", allowedTemplates)));
@@ -325,7 +312,7 @@ namespace Vega.USiteBuilder
                     else
                     {
                         throw new Exception(string.Format("Template '{0}' does not exists. That template is set as allowed template for document type '{1}'",
-                            templateName, DocumentTypeManager.GetDocumentTypeAlias(typeDocType)));
+                            templateName, GetDocumentTypeAlias(typeDocType)));
                     }
                 }
             }
@@ -353,12 +340,8 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         internal static DocumentTypeAttribute GetDocumentTypeAttribute(Type typeDocType)
         {
-            DocumentTypeAttribute retVal = Util.GetAttribute<DocumentTypeAttribute>(typeDocType);
-
-            if (retVal == null)
-            {
-                retVal = DocumentTypeManager.CreateDefaultDocumentTypeAttribute(typeDocType);
-            }
+            DocumentTypeAttribute retVal = Util.GetAttribute<DocumentTypeAttribute>(typeDocType) ??
+                                           CreateDefaultDocumentTypeAttribute(typeDocType);
 
             return retVal;
         }
@@ -378,7 +361,7 @@ namespace Vega.USiteBuilder
         #region [Document type properties synchronization]
         private void SynchronizeDocumentTypeProperties(Type typeDocType, DocumentType docType)
         {
-            this.SynchronizeContentTypeProperties(typeDocType, docType, out this._hadDefaultValues);
+            SynchronizeContentTypeProperties(typeDocType, docType, out _hadDefaultValues);
         }
         #endregion
 
@@ -387,10 +370,10 @@ namespace Vega.USiteBuilder
         {
             foreach (Type type in Util.GetFirstLevelSubTypes(baseTypeDocType))
             {
-                this.SynchronizeAllowedChildContentType(type);
+                SynchronizeAllowedChildContentType(type);
 
                 // process all children document types
-                this.SynchronizeAllowedChildContentTypes(type);
+                SynchronizeAllowedChildContentTypes(type);
             }
         }
 
@@ -399,7 +382,7 @@ namespace Vega.USiteBuilder
             DocumentTypeAttribute docTypeAttr = Util.GetAttribute<DocumentTypeAttribute>(typeDocType);
             if (docTypeAttr != null)
             {
-                DocumentType docType = DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(typeDocType));
+                DocumentType docType = DocumentType.GetByAlias(GetDocumentTypeAlias(typeDocType));
 
                 List<int> allowedTypeIds = new List<int>();
 
@@ -407,7 +390,7 @@ namespace Vega.USiteBuilder
                 {
                     foreach (Type allowedType in docTypeAttr.AllowedChildNodeTypes)
                     {
-                        int id = DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(allowedType)).Id;
+                        int id = DocumentType.GetByAlias(GetDocumentTypeAlias(allowedType)).Id;
                         if (!allowedTypeIds.Contains(id))
                         {
                             allowedTypeIds.Add(id);
@@ -423,19 +406,19 @@ namespace Vega.USiteBuilder
         #endregion
 
         #region ["Allowed child node type of" synchronization]
-        private void SynchronizeReverseAllowedChildContentTypes(Type baseTypeDocType)
+        private void SynchronizeReverseAllowedChildContentTypes()
         {
             // process a reverse-lookup if there's any document types to be sync'ed
-            if (DocumentTypeManager.HasSynchronizedDocumentTypes())
+            if (HasSynchronizedDocumentTypes())
             {
-                foreach (Type docType in DocumentTypeManager._documentTypes.Values)
+                foreach (Type docType in DocumentTypes.Values)
                 {
                     // retrieves the document type attribute, containing all the info
                     // required for synchronisation
                     var docTypeAttr = 
-                        DocumentTypeManager.GetDocumentTypeAttribute(docType);
+                        GetDocumentTypeAttribute(docType);
 
-                    var docTypeNode = DocumentTypeManager.GetDocumentType(docType);
+                    var docTypeNode = GetDocumentType(docType);
 
                     if (docTypeNode != null
                         && docTypeAttr.AllowedChildNodeTypeOf != null
@@ -444,7 +427,7 @@ namespace Vega.USiteBuilder
                         // enumerates through each one of the parent node type
                         foreach (Type parent in docTypeAttr.AllowedChildNodeTypeOf)
                         {
-                            var parentDocType = DocumentTypeManager.GetDocumentType(parent);
+                            var parentDocType = GetDocumentType(parent);
 
                             if (parentDocType != null)
                             {
@@ -514,7 +497,7 @@ namespace Vega.USiteBuilder
                 {
                     foreach(var property in docType.PropertyTypes.Where(prop => prop.ContentTypeId == docType.Id))
                         
-                    if (!propertyAliases.Any(prop => prop ==  property.Alias))
+                    if (propertyAliases.All(prop => prop != property.Alias))
                     {
                         property.delete();
                     }

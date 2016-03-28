@@ -1,14 +1,16 @@
-﻿using System.Web;
+﻿using System;
+using System.Web;
+using System.Web.UI;
 using umbraco.presentation.nodeFactory;
-using System;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
-namespace Vega.USiteBuilder
+namespace Vega.USiteBuilder.TemplateBuilder
 {
 
     /// <summary>
     /// Base class for untyped templates.
     /// </summary>
-    public abstract class TemplateBase : System.Web.UI.MasterPage
+    public abstract class TemplateBase : MasterPage
     {
     }
 
@@ -28,7 +30,7 @@ namespace Vega.USiteBuilder
         {
             get
             {
-                if (this._currentContent == null)
+                if (_currentContent == null)
                 {
                     int nodeId = Node.GetCurrent().Id;
                     if (!HttpContext.Current.Items.Contains(nodeId))
@@ -41,10 +43,10 @@ namespace Vega.USiteBuilder
                         HttpContext.Current.Items.Add(nodeId, item);
                     }
 
-                    this._currentContent = (T)HttpContext.Current.Items[nodeId];
+                    _currentContent = (T)HttpContext.Current.Items[nodeId];
                 }
 
-                return this._currentContent;
+                return _currentContent;
             }
         }
     }

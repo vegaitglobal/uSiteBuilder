@@ -1,13 +1,13 @@
-﻿namespace Vega.USiteBuilder
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using umbraco.cms.businesslogic.macro;
+using Vega.USiteBuilder.Configuration;
+using Vega.USiteBuilder.MacroBuilder;
+
+namespace Vega.USiteBuilder.WebUserControlsBuilder
 {
-    using System;
-    using System.Linq;
-    using System.Reflection;
-    using System.Collections.Generic;
-
-    using umbraco.cms.businesslogic.macro;
-    using System.IO;
-
     internal class WebUserControlsManager : ManagerBase
     {
         public void Synchronize()
@@ -19,24 +19,19 @@
         {
             foreach (Type typeUserControl in Util.GetFirstLevelSubTypes(typeBaseUserControl))
             {
-                if (!this.IsBaseUserControl(typeUserControl))
+                if (!IsBaseUserControl(typeUserControl))
                 {
-                    this.SynchronizeUserControl(typeUserControl);
+                    SynchronizeUserControl(typeUserControl);
                 }
 
                 // sync all children user control
-                this.SynchronizeUserControls(typeUserControl);
+                SynchronizeUserControls(typeUserControl);
             }
         }
 
         private bool IsBaseUserControl(Type typeUserControl)
         {
-            bool retVal = false;
-
-            if (typeUserControl == typeof(WebUserControlBase) || typeUserControl.IsGenericType)
-            {
-                retVal = true;
-            }
+            bool retVal = typeUserControl == typeof(WebUserControlBase) || typeUserControl.IsGenericType;
 
             return retVal;
         }
@@ -60,7 +55,7 @@
 
             try
             {
-                this.AddToSynchronized(macroName, macroAlias, typeUserControl);
+                AddToSynchronized(macroName, macroAlias, typeUserControl);
             }
             catch (ArgumentException exc)
             {
@@ -68,7 +63,7 @@
                     macroAlias, typeUserControl.FullName, typeUserControl.Assembly.FullName, exc.Message));
             }
 
-            if (!Configuration.USiteBuilderConfiguration.SuppressSynchronization)
+            if (!USiteBuilderConfiguration.SuppressSynchronization)
             {
                 Macro macro = new Macro(macroAlias);
                 if (macro == null || macro.Id == 0) // Check id=0 because there is a bug in umbraco that returns Macro object even if there's no macro with given alias in the database.
@@ -85,7 +80,7 @@
                 macro.CacheByPage = macroAttr.CacheByPage;
                 macro.CachePersonalized = macroAttr.CachePersonalized;
 
-                this.SynchronizeMacroProperties(typeUserControl, macro);
+                SynchronizeMacroProperties(typeUserControl, macro);
             }
         }
 
@@ -104,7 +99,7 @@
                 if (macroParamAttr == null)
                 {
                     // if property is not given attribute MacroParameterAttribute try to create default one based on property type
-                    macroParamAttr = this.GetDefaultMacroParameterAttribute(propInfo);
+                    macroParamAttr = GetDefaultMacroParameterAttribute(propInfo);
                     if (macroParamAttr == null)
                     {
                         // if default attribute cannot be created (e.g. if property type is DateTime)

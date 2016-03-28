@@ -1,4 +1,4 @@
-namespace Vega.USiteBuilder
+namespace Vega.USiteBuilder.DataTypeBuilder
 {
   /// <summary>
   /// Prevalue comparison types
@@ -31,10 +31,10 @@ namespace Vega.USiteBuilder
     /// <param name="value">The value.</param>
     public DataTypePrevalue(string alias, string value)
     {
-      this.Alias = alias;
-      this.Value = value;
-      this.SortOrder = 0;
-      this.CompareType = DataTypePrevalueCompareType.ByAliasAndValue;
+      Alias = alias;
+      Value = value;
+      SortOrder = 0;
+      CompareType = DataTypePrevalueCompareType.ByAliasAndValue;
     }
 
     /// <summary>
@@ -44,10 +44,10 @@ namespace Vega.USiteBuilder
     /// <param name="sortOrder">The sort order value.</param>
     public DataTypePrevalue(string value, int sortOrder)
     {
-      this.Alias = string.Empty;
-      this.Value = value;
-      this.SortOrder = sortOrder;
-      this.CompareType = DataTypePrevalueCompareType.ByAliasAndValue;
+      Alias = string.Empty;
+      Value = value;
+      SortOrder = sortOrder;
+      CompareType = DataTypePrevalueCompareType.ByAliasAndValue;
     }
 
     /// <summary>

@@ -1,15 +1,15 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Web;
+﻿using System.Web;
+using umbraco.cms.businesslogic.macro;
+using umbraco.interfaces;
+using umbraco.MacroEngines;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
+namespace Vega.USiteBuilder.Razor
+{
     /// <summary>
     /// Base class for Razor views. Inherits directly from Umbraco's DynamicNodeContext.
     /// </summary>
-    public abstract class USiteBuilderNodeContext<T> : umbraco.MacroEngines.DynamicNodeContext
+    public abstract class USiteBuilderNodeContext<T> : DynamicNodeContext
         where T : DocumentTypeBase, new()
     {
         private T _currentContent;
@@ -30,7 +30,7 @@
         /// </summary>
         /// <param name="macro">The macro.</param>
         /// <param name="node">The node.</param>
-        public override void SetMembers(umbraco.cms.businesslogic.macro.MacroModel macro, umbraco.interfaces.INode node)
+        public override void SetMembers(MacroModel macro, INode node)
         {
             T content = ContentHelper.GetByNodeId<T>(node.Id);
 

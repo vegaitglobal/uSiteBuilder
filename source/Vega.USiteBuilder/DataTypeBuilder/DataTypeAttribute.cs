@@ -1,14 +1,14 @@
-﻿namespace Vega.USiteBuilder
+﻿using System;
+using System.Linq;
+using umbraco.cms.businesslogic.datatype;
+using umbraco.cms.businesslogic.datatype.controls;
+
+namespace Vega.USiteBuilder.DataTypeBuilder
 {
-	using System;
-	using System.Linq;
-
-	using umbraco.cms.businesslogic.datatype;
-
-	/// <summary>
+    /// <summary>
 	/// Provides access to various Umbraco properties of this DataType.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+	[AttributeUsage(AttributeTargets.Class, Inherited = false)]
 	public class DataTypeAttribute : Attribute
 	{
 		/// <summary>
@@ -57,13 +57,16 @@
 					guid = renderControlGuid;
 				}
 
-				if (!string.IsNullOrEmpty(this.RenderControlName))
+				if (!string.IsNullOrEmpty(RenderControlName))
 				{
-					var factory = new umbraco.cms.businesslogic.datatype.controls.Factory();
+					var factory = new Factory();
 					var dataType =
-						factory.GetAll().Where(d => d.DataTypeName == this.RenderControlName).FirstOrDefault();
+						factory.GetAll().FirstOrDefault(d => d.DataTypeName == RenderControlName);
 
-					guid = dataType.Id.ToString();
+				    if (dataType != null)
+				    {
+				        guid = dataType.Id.ToString();
+				    }
 				}
 
 				return guid;

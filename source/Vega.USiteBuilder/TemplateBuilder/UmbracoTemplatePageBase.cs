@@ -1,13 +1,15 @@
 using System;
 using System.Web;
 using umbraco.presentation.nodeFactory;
+using Umbraco.Web.Mvc;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
-namespace Vega.USiteBuilder
+namespace Vega.USiteBuilder.TemplateBuilder
 {
     /// <summary>
     /// Umbraco template page base abstract class
     /// </summary>
-    public abstract class UmbracoTemplatePageBase : Umbraco.Web.Mvc.UmbracoTemplatePage
+    public abstract class UmbracoTemplatePageBase : UmbracoTemplatePage
     {
     }
 
@@ -27,7 +29,7 @@ namespace Vega.USiteBuilder
         {
             get
             {
-                if (this._currentContent == null)
+                if (_currentContent == null)
                 {
                     int nodeId = Node.GetCurrent().Id;
                     if (!HttpContext.Current.Items.Contains(nodeId))
@@ -40,10 +42,10 @@ namespace Vega.USiteBuilder
                         HttpContext.Current.Items.Add(nodeId, item);
                     }
 
-                    this._currentContent = (T)HttpContext.Current.Items[nodeId];
+                    _currentContent = (T)HttpContext.Current.Items[nodeId];
                 }
 
-                return this._currentContent;
+                return _currentContent;
             }
         }
     }

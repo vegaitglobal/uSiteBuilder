@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Xml.XPath;
+using System.Web;
 using System.Xml;
-
+using System.Xml.XPath;
+using umbraco;
 using umbraco.BusinessLogic;
 using umbraco.cms.businesslogic.web;
 using umbraco.presentation.nodeFactory;
-//using umbraco.NodeFactory;
-using umbraco;
-
+using Vega.USiteBuilder.DocumentTypeBuilder;
 using Vega.USiteBuilder.Types;
-using umbraco.interfaces;
-using System.Web;
+//using umbraco.NodeFactory;
 
 namespace Vega.USiteBuilder
 {
@@ -46,7 +43,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static DocumentTypeBase GetCurrentContent()
         {
-            return ContentHelper.GetByNode(Node.GetCurrent());
+            return GetByNode(Node.GetCurrent());
         }
 
         /// <summary>
@@ -67,9 +64,9 @@ namespace Vega.USiteBuilder
             foreach (Node childNode in parentNode.Children)
             {
                 // Check if this childNode is of a given document type and if not deleted
-                if (docTypeAlias == childNode.NodeTypeAlias && !ContentHelper.IsInRecycleBin(childNode.Path))
+                if (docTypeAlias == childNode.NodeTypeAlias && !IsInRecycleBin(childNode.Path))
                 {
-                    var d = ContentHelper.GetByNode<T>(childNode);
+                    var d = GetByNode<T>(childNode);
                     if (d != null)
                     {
                         retVal.Add(d);
@@ -78,7 +75,7 @@ namespace Vega.USiteBuilder
 
                 if (deepGet)
                 {
-                    retVal.AddRange(ContentHelper.GetChildren<T>(childNode.Id, true));
+                    retVal.AddRange(GetChildren<T>(childNode.Id, true));
                 }
             }
 
@@ -94,7 +91,7 @@ namespace Vega.USiteBuilder
         public static List<T> GetChildren<T>(int parentId)
             where T : DocumentTypeBase, new()
         {
-            return ContentHelper.GetChildren<T>(parentId, false);
+            return GetChildren<T>(parentId, false);
         }
 
         /// <summary>
@@ -104,7 +101,7 @@ namespace Vega.USiteBuilder
         /// <param name="parentId">Parent node id of all children to get</param>
         public static List<DocumentTypeBase> GetChildren(int parentId)
         {
-            return ContentHelper.GetChildren(parentId, false);
+            return GetChildren(parentId, false);
         }
 
         /// <summary>
@@ -124,9 +121,9 @@ namespace Vega.USiteBuilder
                 foreach (Node childNode in parentNode.Children)
                 {
                     // Check if this childNode is not deleted
-                    if (!ContentHelper.IsInRecycleBin(childNode.Path))
+                    if (!IsInRecycleBin(childNode.Path))
                     {
-                        var d = ContentHelper.GetByNode(childNode);
+                        var d = GetByNode(childNode);
                         if (d != null)
                         {
                             retVal.Add(d);
@@ -135,7 +132,7 @@ namespace Vega.USiteBuilder
 
                     if (deepGet)
                     {
-                        retVal.AddRange(ContentHelper.GetChildren(childNode.Id, true));
+                        retVal.AddRange(GetChildren(childNode.Id, true));
                     }
                 }
             }
@@ -154,7 +151,7 @@ namespace Vega.USiteBuilder
         {
             Node node = new Node(nodeId);
 
-            return ContentHelper.GetByNode<T>(node);
+            return GetByNode<T>(node);
         }
 
 
@@ -167,7 +164,7 @@ namespace Vega.USiteBuilder
         public static T GetByNode<T>(Node node)
              where T : DocumentTypeBase, new()
         {
-            DocumentTypeBase retVal = ContentHelper.GetByNode(node);
+            DocumentTypeBase retVal = GetByNode(node);
             if (retVal != null)
             {
                 if (retVal is T)
@@ -195,7 +192,7 @@ namespace Vega.USiteBuilder
         {
             Node node = new Node(nodeId);
 
-            return ContentHelper.GetByNode(node);
+            return GetByNode(node);
         }
 
   
@@ -249,7 +246,7 @@ namespace Vega.USiteBuilder
                         {
                             value = null;
                         }
-                        else if (propInfo.PropertyType.Equals(typeof(System.Boolean)))
+                        else if (propInfo.PropertyType == typeof(Boolean))
                         {
                             if (String.IsNullOrEmpty(property.Value) || property.Value == "0")
                             {
@@ -264,18 +261,18 @@ namespace Vega.USiteBuilder
                         {
                             value = ((ICustomTypeConvertor)Activator.CreateInstance(propAttr.CustomTypeConverter)).ConvertValueWhenRead(property.Value);
                         }
-                        else if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
+                        else if (PropertyConvertors.ContainsKey(propInfo.PropertyType))
                         {
                             // will be transformed later. TODO: move transformation here
-                            value = ContentHelper.GetInnerXml(node.Id.ToString(), propertyAlias);
+                            value = GetInnerXml(node.Id.ToString(), propertyAlias);
                         }
                         else if (String.IsNullOrEmpty(property.Value))
                         {
                             // if property type is string or if it's some custom type, try to get the inner xml of this property within a node.
                             if (propInfo.PropertyType == typeof(string) ||
-                                ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
+                                PropertyConvertors.ContainsKey(propInfo.PropertyType))
                             {
-                                value = ContentHelper.GetInnerXml(node.Id.ToString(), propertyAlias);
+                                value = GetInnerXml(node.Id.ToString(), propertyAlias);
                                 if (value == null && propInfo.PropertyType == typeof(string))
                                 {
                                     value = string.Empty;
@@ -293,7 +290,7 @@ namespace Vega.USiteBuilder
 
                             // TODO: If data type is DateTime and is nullable and is less than 1.1.1000 than set it to NULL
                         }
-                        else if (propInfo.PropertyType.Equals(typeof(HtmlString)))
+                        else if (propInfo.PropertyType == typeof(HtmlString))
                         {
                             value = new HtmlString(property.Value);
                         }
@@ -350,7 +347,7 @@ namespace Vega.USiteBuilder
         {
             List<DocumentTypeBase> retVal = new List<DocumentTypeBase>();
 
-            XPathNodeIterator rootDocIterator = umbraco.library.GetXmlAll();
+            XPathNodeIterator rootDocIterator = library.GetXmlAll();
 
             XmlDocument rootDoc = new XmlDocument();
             rootDoc.LoadXml(rootDocIterator.Current.OuterXml);
@@ -361,7 +358,7 @@ namespace Vega.USiteBuilder
             {
                 Node n = new Node(node);
 
-                var d = ContentHelper.GetByNode(n);
+                var d = GetByNode(n);
                 if (d != null)
                 {
                     retVal.Add(d);
@@ -380,7 +377,7 @@ namespace Vega.USiteBuilder
         /// <param name="publish">If set to <c>true</c> it contentItem will be published as well.</param>
         public static void Save(DocumentTypeBase contentItem, bool publish)
         {
-            ContentHelper.Save(contentItem, Util.GetAdminUser(), publish);
+            Save(contentItem, Util.GetAdminUser(), publish);
         }
 
         /// <summary>
@@ -391,7 +388,7 @@ namespace Vega.USiteBuilder
         /// <param name="contentItem">Content item to update/add</param>
         public static void Save(DocumentTypeBase contentItem)
         {
-            ContentHelper.Save(contentItem, Util.GetAdminUser(), true);
+            Save(contentItem, Util.GetAdminUser(), true);
         }
 
         /// <summary>
@@ -452,9 +449,9 @@ namespace Vega.USiteBuilder
                             propertyAlias, document.Id, docType.Alias));
                     }
 
-                    if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
+                    if (PropertyConvertors.ContainsKey(propInfo.PropertyType))
                     {
-                        property.Value = ContentHelper.PropertyConvertors[propInfo.PropertyType].ConvertValueWhenWrite(propInfo.GetValue(contentItem, null));
+                        property.Value = PropertyConvertors[propInfo.PropertyType].ConvertValueWhenWrite(propInfo.GetValue(contentItem, null));
                     }
                     else
                     {
@@ -471,8 +468,8 @@ namespace Vega.USiteBuilder
             {
                 document.Publish(user);
 
-                umbraco.library.UpdateDocumentCache(document.Id);
-                umbraco.library.RefreshContent();
+                library.UpdateDocumentCache(document.Id);
+                library.RefreshContent();
             }
         }
 
@@ -491,7 +488,7 @@ namespace Vega.USiteBuilder
             }
             document.delete(deletePermanently);
 
-            umbraco.library.RefreshContent();
+            library.RefreshContent();
         }
 
         /// <summary>
@@ -500,7 +497,7 @@ namespace Vega.USiteBuilder
         /// <param name="id">Content item id</param>
         public static void DeleteContent(int id)
         {
-            ContentHelper.DeleteContent(id, false);
+            DeleteContent(id, false);
         }
 
         /// <summary>

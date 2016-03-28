@@ -1,14 +1,11 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
+﻿using System;
 
+namespace Vega.USiteBuilder.DocumentTypeBuilder
+{
     /// <summary>
     /// Allows setting document type tab name with spaces
     /// </summary>
-    [AttributeUsage(AttributeTargets.Enum | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Enum | AttributeTargets.Field)]
     public class TabNameAttribute : Attribute
     {
         /// <summary>
@@ -17,7 +14,7 @@
         /// <param name="name">The name.</param>
         public TabNameAttribute(string name)
         {
-            this.Name = name;
+            Name = name;
         }
 
         /// <summary>

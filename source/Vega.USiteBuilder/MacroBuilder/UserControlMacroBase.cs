@@ -1,4 +1,4 @@
-﻿namespace Vega.USiteBuilder
+﻿namespace Vega.USiteBuilder.MacroBuilder
 {
     /// <summary>
     /// User control macro base class

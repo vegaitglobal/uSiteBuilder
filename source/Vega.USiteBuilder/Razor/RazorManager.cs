@@ -1,12 +1,13 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.IO;
-    using umbraco.cms.businesslogic.macro;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using umbraco.cms.businesslogic.macro;
+using Vega.USiteBuilder.Configuration;
+using Vega.USiteBuilder.MacroBuilder;
 
+namespace Vega.USiteBuilder.Razor
+{
     internal class RazorManager : ManagerBase
     {
         private const string TagMacroStart = "Macro={";
@@ -22,7 +23,7 @@
                 cshtml = cshtml.Replace("\n", "");
                 cshtml = cshtml.Replace("\r", "");
 
-                this.AddMacroIfDefined(cshtml, path);
+                AddMacroIfDefined(cshtml, path);
             }            
         }
 
@@ -63,7 +64,7 @@
                 RazorMacro macro = Util.JsonDeserialize<RazorMacro>(json);
                 macro.ScriptFilePath = path;
 
-                this.AddOrUpdateMacro(macro);
+                AddOrUpdateMacro(macro);
             }
         }
 
@@ -71,7 +72,7 @@
         {
             try
             {
-                this.AddToSynchronized(razorMacro.Name, razorMacro.Alias, razorMacro.GetType());
+                AddToSynchronized(razorMacro.Name, razorMacro.Alias, razorMacro.GetType());
             }
             catch (ArgumentException exc)
             {
@@ -79,7 +80,7 @@
                     razorMacro.Alias, razorMacro.Name, razorMacro.ScriptFilePath, exc.Message));
             }
 
-            if (!Configuration.USiteBuilderConfiguration.SuppressSynchronization)
+            if (!USiteBuilderConfiguration.SuppressSynchronization)
             {
                 Macro macro = new Macro(razorMacro.Alias);
                 if (macro == null || macro.Id == 0)
@@ -111,7 +112,6 @@
                         {
                             string macroTypes = String.Empty;
                             allPropertyTypes.ForEach(pt => macroTypes += pt.Alias + ",");
-                            macroTypes.Substring(0, macroTypes.Length - 1);
 
                             throw new Exception(String.Format("Macro parameter type '{0}' not found. Parameter name: '{1}', Script: '{2}'. The following macro types are available: '{3}'",
                                 parameter.Type, parameter.Name, razorMacro.ScriptFilePath, macroTypes));

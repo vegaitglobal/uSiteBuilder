@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using Umbraco.Core;
+﻿using Umbraco.Core;
+using Vega.USiteBuilder.Configuration;
 
 namespace Vega.USiteBuilder
 {
@@ -37,7 +33,7 @@ namespace Vega.USiteBuilder
         /// <param name="applicationContext">The application context.</param>
         public void OnApplicationStarted(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
         {
-            if (!Configuration.USiteBuilderConfiguration.SuppressSynchronization)
+            if (!USiteBuilderConfiguration.SuppressSynchronization)
             {
                 UmbracoManager.SynchronizeIfNotSynchronized();
             }

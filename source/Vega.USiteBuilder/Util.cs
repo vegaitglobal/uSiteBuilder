@@ -1,27 +1,23 @@
-﻿using System.Web;
-using System.Web.Caching;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Web;
 using System.Xml;
+using System.Xml.XPath;
+using umbraco;
+using umbraco.BusinessLogic;
+using umbraco.cms.businesslogic;
+using umbraco.cms.businesslogic.datatype;
+using umbraco.cms.businesslogic.propertytype;
 using Umbraco.Core;
-using Umbraco.Core.Configuration;
-using Umbraco.Core.Logging;
+using Vega.USiteBuilder.Configuration;
 
 namespace Vega.USiteBuilder
 {
-    using System;
-    using System.Linq;
-    using System.Collections.Generic;
-    using System.Reflection;
-    using System.Xml.XPath;
-
-    using umbraco.BusinessLogic;
-    using umbraco.cms.businesslogic;
-    using umbraco.cms.businesslogic.datatype;
-    using umbraco.cms.businesslogic.propertytype;
-
-    using Vega.USiteBuilder.Configuration;
-    using System.IO;
-    using System.Text;
-
     /// <summary>
     /// Contains various utility methods
     /// </summary>
@@ -47,13 +43,12 @@ namespace Vega.USiteBuilder
 
                 foreach (Module module in modules)
                 {
-                    Type[] types = null;
                     try
                     {
-                        types = module.GetTypes();
+                        var types = module.GetTypes();
                         foreach (Type t in types)
                         {
-                            if (t.BaseType != null && (t.BaseType.Equals(type) ||
+                            if (t.BaseType != null && (t.BaseType == type ||
                                 (type.IsGenericType && type.Name == t.BaseType.Name)) ||
                                 t.GetInterfaces().FirstOrDefault(i => i == type) != null)
                             {
@@ -86,15 +81,8 @@ namespace Vega.USiteBuilder
                 {
                     try
                     {
-                        Type[] types = null;
-                        types = module.GetTypes();
-                        foreach (Type t in types)
-                        {
-                            if (t.BaseType != null && t.IsSubclassOf(type))
-                            {
-                                retVal.Add(t);
-                            }
-                        }
+                        var types = module.GetTypes();
+                        retVal.AddRange(types.Where(t => t.BaseType != null && t.IsSubclassOf(type)));
                     }
                     catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
                 }
@@ -107,7 +95,7 @@ namespace Vega.USiteBuilder
         {
             if (USiteBuilderConfiguration.Assemblies != "")
             {
-                string[] assemblynames = USiteBuilderConfiguration.Assemblies.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] assemblynames = USiteBuilderConfiguration.Assemblies.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
                 List<Assembly> result = new List<Assembly>();
 
@@ -201,9 +189,9 @@ namespace Vega.USiteBuilder
         /// <returns>true if typeArgument is used as an argument in generic type typeGeneric</returns>
         public static bool IsGenericArgumentTypeOf(Type typeGeneric, Type typeArgument)
         {
-            foreach (Type t in typeGeneric.GetGenericArguments())
+            if (typeGeneric.GetGenericArguments().Any(t => t == typeArgument))
             {
-                if (t.Equals(typeArgument)) return true;
+                return true;
             }
 
             if (typeGeneric.BaseType != null)
@@ -235,7 +223,7 @@ namespace Vega.USiteBuilder
             string retVal = String.Empty;
             try
             {
-                XPathNodeIterator xpathNodeIterator = umbraco.library.GetMedia(mediaId, false);
+                XPathNodeIterator xpathNodeIterator = library.GetMedia(mediaId, false);
                 if (xpathNodeIterator != null && mediaId != 0)
                 {
                     xpathNodeIterator.MoveNext();
@@ -277,13 +265,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static Version GetCurrentUmbracoVersion()
         {
-            if (Util.UmbracoVersion == null)
-            {
-                //Util.UmbracoVersion = Assembly.LoadFrom("umbraco.dll").GetName().Version;
-                Util.UmbracoVersion = typeof(umbraco.content).Assembly.GetName().Version;
-            }
-
-            return Util.UmbracoVersion;
+            return UmbracoVersion ?? (UmbracoVersion = typeof (content).Assembly.GetName().Version);
         }
 
 
@@ -295,12 +277,7 @@ namespace Vega.USiteBuilder
         /// </returns>
         public static bool IsUmbraco47orHigher()
         {
-            bool retVal = false;
-
-            if (Util.GetCurrentUmbracoVersion() >= new Version(1, 0, 4077, 0))
-            {
-                retVal = true;
-            }
+            bool retVal = GetCurrentUmbracoVersion() >= new Version(1, 0, 4077, 0);
 
             return retVal;
         }
@@ -313,9 +290,9 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static string JsonSerialize<T>(T obj)
         {
-            string retVal = null;
+            string retVal;
 
-            System.Runtime.Serialization.Json.DataContractJsonSerializer serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(obj.GetType());
+            DataContractJsonSerializer serializer = new DataContractJsonSerializer(obj.GetType());
             using (MemoryStream ms = new MemoryStream())
             {
                 serializer.WriteObject(ms, obj);
@@ -333,11 +310,11 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static T JsonDeserialize<T>(string json)
         {
-            T obj = default(T);
+            T obj;
 
             using (MemoryStream ms = new MemoryStream(Encoding.Unicode.GetBytes(json)))
             {
-                System.Runtime.Serialization.Json.DataContractJsonSerializer serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(T));
+                DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(T));
                 obj = (T)serializer.ReadObject(ms);
             }
 

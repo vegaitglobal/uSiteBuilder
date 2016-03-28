@@ -1,11 +1,11 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
+﻿using System;
 
+namespace Vega.USiteBuilder.WebUserControlsBuilder
+{
     /// <summary>
     /// Sets the properties of a macro corresponding to this control.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class MacroAttribute : Attribute
     {
         /// <summary>
@@ -13,11 +13,11 @@
         /// </summary>
         public MacroAttribute()
         {
-            this.UseInEditor = false;
-            this.RenderContentInEditor = true;
-            this.CachePeriod = 0;
-            this.CacheByPage = true;
-            this.CachePersonalized = false;
+            UseInEditor = false;
+            RenderContentInEditor = true;
+            CachePeriod = 0;
+            CacheByPage = true;
+            CachePersonalized = false;
         }
 
         /// <summary>

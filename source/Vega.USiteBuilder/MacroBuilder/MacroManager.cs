@@ -1,12 +1,9 @@
-﻿namespace Vega.USiteBuilder.MacroBuilder
+﻿using System;
+using System.Linq;
+using umbraco.cms.businesslogic.macro;
+
+namespace Vega.USiteBuilder.MacroBuilder
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-
-    using umbraco.cms.businesslogic.macro;
-    using umbraco.BusinessLogic;
-
     internal class MacroManager : ManagerBase
     {
         public void Synchronize()
@@ -24,8 +21,10 @@
         {
             MacroBase macroDefinition = Activator.CreateInstance(typeMacro, null) as MacroBase;
 
+            if (macroDefinition == null) return;
+
             // add try/catch
-            this.AddToSynchronized(macroDefinition.MacroName, typeMacro.Name, typeMacro);
+            AddToSynchronized(macroDefinition.MacroName, typeMacro.Name, typeMacro);
 
             Macro macro = Macro.GetByAlias(typeMacro.Name);
             if (macro == null || macro.Id == 0)
@@ -61,7 +60,7 @@
 
             macro.Save();
 
-            this.SynchronizeMacroProperties(macroDefinition, macro);
+            SynchronizeMacroProperties(macroDefinition, macro);
         }
 
         private void SynchronizeMacroProperties(MacroBase macroDefinition, Macro macro)
@@ -73,11 +72,8 @@
                 {
                     MacroPropertyType type = MacroPropertyType.GetAll.First(mpt => mpt.Alias.ToLower() == parameter.Type.ToString().ToLower());
 
-                    MacroProperty macroProperty = MacroProperty.GetProperties(macro.Id).FirstOrDefault(mp => mp.Alias == parameter.Alias);
-                    if (macroProperty == null)
-                    {
-                        macroProperty = MacroProperty.MakeNew(macro, parameter.Show, parameter.Alias, parameter.Name, type);
-                    }
+                    MacroProperty macroProperty = MacroProperty.GetProperties(macro.Id).FirstOrDefault(mp => mp.Alias == parameter.Alias) ??
+                                                  MacroProperty.MakeNew(macro, parameter.Show, parameter.Alias, parameter.Name, type);
 
                     macroProperty.Name = parameter.Name;
                     macroProperty.Public = parameter.Show;

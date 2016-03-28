@@ -1,14 +1,12 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
+﻿using System;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
+namespace Vega.USiteBuilder.MemberBuilder
+{
     /// <summary>
     /// Declares a class as MemberType. You can use this attribute to set various Umbraco properties of this Member type.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class MemberTypeAttribute : Attribute
     {
         /// <summary>
@@ -17,9 +15,9 @@
         public MemberTypeAttribute()
         {
             // setting up default values
-            this.IconUrl = DocumentTypeDefaultValues.IconUrl;
-            this.Thumbnail = DocumentTypeDefaultValues.Thumbnail;
-            this.Description = "";
+            IconUrl = DocumentTypeDefaultValues.IconUrl;
+            Thumbnail = DocumentTypeDefaultValues.Thumbnail;
+            Description = "";
         }
 
         /// <summary>

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using umbraco.cms.businesslogic.datatype;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
 namespace Vega.USiteBuilder.DataTypeBuilder
 {

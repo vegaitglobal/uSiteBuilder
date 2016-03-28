@@ -1,23 +1,23 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Vega.USiteBuilder.Configuration;
+using Vega.USiteBuilder.DataTypeBuilder;
+using Vega.USiteBuilder.DocumentTypeBuilder;
+using Vega.USiteBuilder.MemberBuilder;
+using Vega.USiteBuilder.TemplateBuilder;
+using Vega.USiteBuilder.Types;
+using Vega.USiteBuilder.WebUserControlsBuilder;
 
 namespace Vega.USiteBuilder
 {
-    using System;
-    using Vega.USiteBuilder;
-    using System.Collections.Generic;
-    using Vega.USiteBuilder.Types;
-    using System.Linq;
-    using Vega.USiteBuilder.DataTypeBuilder;
-    using Vega.USiteBuilder.DocumentTypeBuilder;
-    using Vega.USiteBuilder.TemplateBuilder;
-
     /// <summary>
     /// Umbraco manager
     /// </summary>
     public class UmbracoManager
     {
-        private static string _syncObj = "sync";
-        private static bool _synchronized = false;
+        private const string SyncObj = "sync";
+        private static bool _synchronized;
 
         /// <summary>
         /// Synchronizes if not synchronized.
@@ -27,7 +27,7 @@ namespace Vega.USiteBuilder
             // we are not locking immediatly because it will impact performance
             if (!_synchronized)
             {
-                lock (_syncObj)
+                lock (SyncObj)
                 {
                     if (!_synchronized)
                     {
@@ -42,7 +42,7 @@ namespace Vega.USiteBuilder
         private static void Synchronize()
         {
             // stop processing here if the synchroniser is suppressed
-            if (Configuration.USiteBuilderConfiguration.SuppressSynchronization)
+            if (USiteBuilderConfiguration.SuppressSynchronization)
                 return;
 
 			SynchronizeDatatTypes();
@@ -109,7 +109,7 @@ namespace Vega.USiteBuilder
         /// </summary>
         public static void SynchronizeAllTemplates()
         {
-            lock (_syncObj)
+            lock (SyncObj)
             {
                 SynchronizeTemplates();
             }
@@ -120,7 +120,7 @@ namespace Vega.USiteBuilder
         /// </summary>
         public static void SynchronizeAllDataTypes()
         {
-            lock (_syncObj)
+            lock (SyncObj)
             {
                 SynchronizeDatatTypes();
             }
@@ -140,7 +140,7 @@ namespace Vega.USiteBuilder
         /// </summary>
         public static void SynchronizeAllDocumentTypes()
         {
-            lock (_syncObj)
+            lock (SyncObj)
             {
                 SynchronizeDocumentTypes();
 
@@ -180,12 +180,6 @@ namespace Vega.USiteBuilder
         {
             WebUserControlsManager userControlsManager = new WebUserControlsManager();
             userControlsManager.Synchronize();
-        }
-
-        private static void SynchronizeRazorMacros()
-        {
-            RazorManager razorManager = new RazorManager();
-            razorManager.Synchronize();
         }
 
         private static void RegisterConvertors()

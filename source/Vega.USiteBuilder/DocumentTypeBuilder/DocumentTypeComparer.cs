@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using umbraco.cms.businesslogic;
-using umbraco.cms.businesslogic.datatype;
 using umbraco.cms.businesslogic.propertytype;
 using umbraco.cms.businesslogic.template;
 using umbraco.cms.businesslogic.web;
@@ -103,12 +102,9 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
                 return false;
             }
 
-            foreach (Template template in allowedTemplates)
+            if (allowedTemplates.Any(template => existingTemplates.All(t => t.Alias != template.Alias)))
             {
-                if (!existingTemplates.Any(t => t.Alias == template.Alias))
-                {
-                    return false;
-                }
+                return false;
             }
 
             //TODO: not sure about the logic here

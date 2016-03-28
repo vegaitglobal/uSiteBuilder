@@ -1,14 +1,12 @@
-﻿namespace Vega.USiteBuilder
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
+﻿using System;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
+namespace Vega.USiteBuilder.MemberBuilder
+{
     /// <summary>
     /// Declares a member type property. Use this property in MemberType definition class
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class MemberTypePropertyAttribute : DocumentTypePropertyAttribute
     {
         /// <summary>

@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("fad805b9-b4cc-4704-a35d-1ff7166a9255")]
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Vega.USiteBuilder.Test")]
+[assembly: InternalsVisibleTo("Vega.USiteBuilder.Test")]
 
 // Version information for an assembly consists of the following four values:
 //

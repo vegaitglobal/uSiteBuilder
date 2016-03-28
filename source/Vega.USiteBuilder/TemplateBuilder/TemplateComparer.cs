@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using umbraco.IO;
+using System.Web.Hosting;
 using umbraco.cms.businesslogic.template;
+using Umbraco.Core;
+using Umbraco.Core.IO;
+using Vega.USiteBuilder.DocumentTypeBuilder;
+using IOHelper = umbraco.IO.IOHelper;
 
 namespace Vega.USiteBuilder.TemplateBuilder
 {
@@ -19,7 +21,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
         /// <returns></returns>
         public List<ContentComparison> PreviewTemplateChanges()
         {
-            if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.WebForms)
+            if (Util.DefaultRenderingEngine == RenderingEngine.WebForms)
             {
                 return PreviewTemplates(typeof(TemplateBase));
             }
@@ -31,7 +33,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
         {
             List<ContentComparison> templateComparison = new List<ContentComparison>();
 
-            string viewsPath = System.Web.Hosting.HostingEnvironment.MapPath(Umbraco.Core.IO.SystemDirectories.MvcViews);
+            string viewsPath = HostingEnvironment.MapPath(SystemDirectories.MvcViews);
             if (viewsPath != null)
             {
                 DirectoryInfo viewsFolder = new DirectoryInfo(viewsPath);
@@ -59,7 +61,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
                     {
                         int parentTemplateId = 0;
                         string parentMasterPageName = TemplateManager.GetViewParent(File.ReadAllText(path));
-                        ;
+
                         if (!string.IsNullOrEmpty(parentMasterPageName) && parentMasterPageName != "default")
                         {
                             Template parentTemplate = Template.GetByAlias(parentMasterPageName);
@@ -121,7 +123,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
                 if (template == null)
                 {
                     string path =
-                        IOHelper.MapPath(SystemDirectories.Masterpages + "/" + alias.Replace(" ", "") + ".master");
+                        IOHelper.MapPath(umbraco.IO.SystemDirectories.Masterpages + "/" + alias.Replace(" ", "") + ".master");
 
                     if (File.Exists(path))
                     {

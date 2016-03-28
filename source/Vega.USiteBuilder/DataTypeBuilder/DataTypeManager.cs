@@ -1,25 +1,22 @@
-﻿namespace Vega.USiteBuilder
+﻿using System;
+using System.Linq;
+using System.Web;
+using umbraco;
+using umbraco.BusinessLogic;
+using umbraco.cms.businesslogic.datatype;
+using umbraco.cms.businesslogic.datatype.controls;
+using umbraco.DataLayer;
+
+namespace Vega.USiteBuilder.DataTypeBuilder
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-
-	using umbraco.BusinessLogic;
-	using umbraco.cms.businesslogic.datatype;
-
-	/// <summary>
+    /// <summary>
 	/// Manages DataType synchronization
 	/// </summary>
 	internal class DataTypeManager : ManagerBase
 	{
-		// Holds all document types found in 
-		// Type = Document type type (subclass of DocumentTypeBase), string = document type alias
-		private static Dictionary<string, Type> dataTypes = new Dictionary<string, Type>();
-
-
 		public DataTypeManager()
 		{
-			umbraco.DataLayer.DataLayerHelper.CreateSqlHelper(umbraco.GlobalSettings.DbDSN);
+			DataLayerHelper.CreateSqlHelper(GlobalSettings.DbDSN);
 		}
 
 		/// <summary>
@@ -27,14 +24,12 @@
 		/// </summary>
 		public void Synchronize()
 		{
-			dataTypes.Clear();
-
-			this.SynchronizeDataTypes();
+			SynchronizeDataTypes();
 		}
 
 		private void SynchronizeDataTypes()
 		{
-			var factory = new umbraco.cms.businesslogic.datatype.controls.Factory();
+			var factory = new Factory();
 
 			foreach (Type typeDataType in Util.GetFirstLevelSubTypes(typeof(DataTypeBase)))
 			{
@@ -42,7 +37,7 @@
 
 				try
 				{
-					this.AddToSynchronized(null, dataTypeAttr.Name, typeDataType);
+					AddToSynchronized(null, dataTypeAttr.Name, typeDataType);
 				}
 				catch (ArgumentException exc)
 				{
@@ -74,7 +69,7 @@
 			    dtd.DataType = factory.DataType(new Guid(dataTypeAttr.RenderControlGuid));
                 dtd.Text = dataTypeAttr.Name;
 
-			    System.Web.HttpRuntime.Cache.Remove(string.Format("UmbracoDataTypeDefinition{0}", dtd.UniqueId));
+			    HttpRuntime.Cache.Remove(string.Format("UmbracoDataTypeDefinition{0}", dtd.UniqueId));
 
 				dtd.Save();
                 

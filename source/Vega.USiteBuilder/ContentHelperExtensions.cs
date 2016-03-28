@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Umbraco.Core.Models;
+using Vega.USiteBuilder.DocumentTypeBuilder;
 
 namespace Vega.USiteBuilder
 {

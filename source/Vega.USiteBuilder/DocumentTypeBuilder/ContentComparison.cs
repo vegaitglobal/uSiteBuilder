@@ -1,7 +1,5 @@
-namespace Vega.USiteBuilder
+namespace Vega.USiteBuilder.DocumentTypeBuilder
 {
-    using System;
-
     /// <summary>
     /// Comtent comparison entity class
     /// </summary>

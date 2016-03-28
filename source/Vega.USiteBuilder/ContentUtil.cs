@@ -1,21 +1,15 @@
-﻿namespace Vega.USiteBuilder
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Xml;
+using umbraco;
+using umbraco.cms.businesslogic;
+using umbraco.cms.businesslogic.property;
+using Vega.USiteBuilder.DocumentTypeBuilder;
+using Vega.USiteBuilder.Types;
+
+namespace Vega.USiteBuilder
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Reflection;
-    using System.Xml.XPath;
-    using System.Xml;
-
-    using umbraco.BusinessLogic;
-    using umbraco.cms.businesslogic.web;
-    using umbraco.presentation.nodeFactory;
-    using umbraco;
-
-    using Vega.USiteBuilder.Types;
-    using umbraco.interfaces;
-    using umbraco.cms.businesslogic;
-    using umbraco.cms.businesslogic.property;
-
     /// <summary>
     /// NOT USED YET
     /// </summary>
@@ -59,7 +53,7 @@
                     string propertyAlias;
                     DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-                    umbraco.cms.businesslogic.property.Property property = content.getProperty(propertyAlias);
+                    Property property = content.getProperty(propertyAlias);
                     
                     object value = null;
                     try
@@ -68,7 +62,7 @@
                         {
                             value = null;
                         }
-                        else if (propInfo.PropertyType.Equals(typeof(System.Boolean)))
+                        else if (propInfo.PropertyType == typeof(Boolean))
                         {
                             if (String.IsNullOrEmpty(Convert.ToString(property.Value)) || Convert.ToString(property.Value) == "0")
                             {
@@ -81,7 +75,7 @@
                         }
                         else if (PropertyConvertors.ContainsKey(propInfo.PropertyType))
                         {
-                            value = ContentUtil.GetInnerXml(content.Id.ToString(), propertyAlias);
+                            value = GetInnerXml(content.Id.ToString(), propertyAlias);
                         }
                         else if (String.IsNullOrEmpty(Convert.ToString(property.Value)))
                         {
@@ -89,7 +83,7 @@
                             if (propInfo.PropertyType == typeof(string) ||
                                 PropertyConvertors.ContainsKey(propInfo.PropertyType))
                             {
-                                value = ContentUtil.GetInnerXml(content.Id.ToString(), propertyAlias);
+                                value = GetInnerXml(content.Id.ToString(), propertyAlias);
                                 if (value == null && propInfo.PropertyType == typeof(string))
                                 {
                                     value = string.Empty;
