@@ -49,6 +49,11 @@
         public string Description { get; set; }
 
         /// <summary>
+        /// Get's the Default Tab
+        /// </summary>
+        public string DefaultTab { get; set; }
+
+        /// <summary>
         /// Default template for this Document Type.
         /// Value of this property can be either string (name of Template that will be set as default) or Type (Type of template's masterpage, for example typeof(MyProject.MyTemplate)).
         /// Default value: If there's only one template in application that is strongly typed with this Document Type,
@@ -105,10 +110,5 @@
         /// as its generic parameter. By setting this property to some not null value, default behaviour is overriden.
         /// </summary>
         public string[] AllowedTemplates { get; set; }
-
-        /// <summary>
-        /// Only Content Types with this checked can be created at the root level of Content and Media trees
-        /// </summary>
-        public bool AllowAtRoot { get; set; }
     }
 }

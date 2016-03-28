@@ -1,49 +1,58 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder", "Vega.USiteBuilder\Vega.USiteBuilder.csproj", "{ACD95FDB-D1E3-43BA-8A00-A1D8F663C69B}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Setup", "Setup", "{100812D5-03AE-42BC-ADE4-53002D59B2DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.Test.Web", "Vega.Test.Web\Vega.Test.Web.csproj", "{E7B658D2-5CD8-4998-A10D-66A8C3514854}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{AC3D370F-FE20-40AB-BBD6-288B1C56CCF3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VsIntegration", "VsIntegration", "{17CC5B67-F1BD-4887-9E82-378CFE309D66}"
 	ProjectSection(SolutionItems) = preProject
-		Configuration\ReadMe.txt = Configuration\ReadMe.txt
+		Vega.USiteBuilder.VsIntegration.ProjectTemplate\SiteBuilderProjectTemplate.vstemplate = Vega.USiteBuilder.VsIntegration.ProjectTemplate\SiteBuilderProjectTemplate.vstemplate
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.Test.Entities", "Vega.Test.Entities\Vega.Test.Entities.csproj", "{FDB24BFD-EDFF-4C7F-8DF2-982B246F9F12}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder", "Vega.USiteBuilder\Vega.USiteBuilder.csproj", "{957B4167-77B9-4E21-BA5D-C225B38CF90E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.Test.MVC", "Vega.Test.MVC\Vega.Test.MVC.csproj", "{500EFBF3-24C6-4D58-8814-78FDC4D2D3A2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder.VsIntegration", "Vega.USiteBuilder.VsIntegration\Vega.USiteBuilder.VsIntegration.csproj", "{BDC7D7A5-DA09-449D-A67C-3BB6430F9111}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.Test.Web_v7", "Vega.Test.Web_v7\Vega.Test.Web_v7.csproj", "{FE59FC77-2499-462A-BA80-37FB8E84548F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder.VsIntegration.ProjectTemplate", "Vega.USiteBuilder.VsIntegration.ProjectTemplate\Vega.USiteBuilder.VsIntegration.ProjectTemplate.csproj", "{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Vega.USiteBuilder.Setup", "Vega.USiteBuilder.Setup\Vega.USiteBuilder.Setup.vdproj", "{9194305A-4575-4039-87A7-7B258D7EB91E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder.Setup.CustomActions", "Vega.USiteBuilder.Setup.CustomActions\Vega.USiteBuilder.Setup.CustomActions.csproj", "{5EA511B4-AA10-431A-941C-50D3C63BC3FE}"
 EndProject
 Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Vega.USiteBuilder.vsmdi
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ACD95FDB-D1E3-43BA-8A00-A1D8F663C69B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ACD95FDB-D1E3-43BA-8A00-A1D8F663C69B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ACD95FDB-D1E3-43BA-8A00-A1D8F663C69B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ACD95FDB-D1E3-43BA-8A00-A1D8F663C69B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7B658D2-5CD8-4998-A10D-66A8C3514854}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7B658D2-5CD8-4998-A10D-66A8C3514854}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7B658D2-5CD8-4998-A10D-66A8C3514854}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7B658D2-5CD8-4998-A10D-66A8C3514854}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FDB24BFD-EDFF-4C7F-8DF2-982B246F9F12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FDB24BFD-EDFF-4C7F-8DF2-982B246F9F12}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FDB24BFD-EDFF-4C7F-8DF2-982B246F9F12}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FDB24BFD-EDFF-4C7F-8DF2-982B246F9F12}.Release|Any CPU.Build.0 = Release|Any CPU
-		{500EFBF3-24C6-4D58-8814-78FDC4D2D3A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{500EFBF3-24C6-4D58-8814-78FDC4D2D3A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{500EFBF3-24C6-4D58-8814-78FDC4D2D3A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{500EFBF3-24C6-4D58-8814-78FDC4D2D3A2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FE59FC77-2499-462A-BA80-37FB8E84548F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FE59FC77-2499-462A-BA80-37FB8E84548F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FE59FC77-2499-462A-BA80-37FB8E84548F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FE59FC77-2499-462A-BA80-37FB8E84548F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{957B4167-77B9-4E21-BA5D-C225B38CF90E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{957B4167-77B9-4E21-BA5D-C225B38CF90E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{957B4167-77B9-4E21-BA5D-C225B38CF90E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{957B4167-77B9-4E21-BA5D-C225B38CF90E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDC7D7A5-DA09-449D-A67C-3BB6430F9111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDC7D7A5-DA09-449D-A67C-3BB6430F9111}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDC7D7A5-DA09-449D-A67C-3BB6430F9111}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDC7D7A5-DA09-449D-A67C-3BB6430F9111}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9194305A-4575-4039-87A7-7B258D7EB91E}.Debug|Any CPU.ActiveCfg = Debug
+		{9194305A-4575-4039-87A7-7B258D7EB91E}.Release|Any CPU.ActiveCfg = Release
+		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9194305A-4575-4039-87A7-7B258D7EB91E} = {100812D5-03AE-42BC-ADE4-53002D59B2DB}
+		{5EA511B4-AA10-431A-941C-50D3C63BC3FE} = {100812D5-03AE-42BC-ADE4-53002D59B2DB}
+		{BDC7D7A5-DA09-449D-A67C-3BB6430F9111} = {17CC5B67-F1BD-4887-9E82-378CFE309D66}
+		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637} = {17CC5B67-F1BD-4887-9E82-378CFE309D66}
 	EndGlobalSection
 EndGlobal

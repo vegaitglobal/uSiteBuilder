@@ -1,0 +1,34 @@
+<VSTemplate Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" Type="Project">
+  <TemplateData>
+    <Name>uSiteBuilder Project</Name>
+    <Description>Creates uSiteBuilder project.</Description>
+    <ProjectType>CSharp</ProjectType>
+    <ProjectSubType>Vega</ProjectSubType>
+    <SortOrder>1000</SortOrder>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>USiteBuilderProject</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+    <LocationField>Enabled</LocationField>
+    <EnableLocationBrowseButton>true</EnableLocationBrowseButton>
+    <Icon>UmbracoIcon.ico</Icon>
+  </TemplateData>
+  <TemplateContent>
+    <Project TargetFileName="Vega.USiteBuilder.VsIntegration.ProjectTemplate.csproj" File="Vega.USiteBuilder.VsIntegration.ProjectTemplate.csproj" ReplaceParameters="true">
+      <Folder Name="Properties" TargetFolderName="Properties">
+        <ProjectItem ReplaceParameters="true" TargetFileName="AssemblyInfo.cs">AssemblyInfo.cs</ProjectItem>
+      </Folder>
+      <Folder Name="App_Data" TargetFolderName="App_Data" />
+      <Folder Name="Dlls" TargetFolderName="Dlls">
+        <ProjectItem ReplaceParameters="false" TargetFileName="Vega.USiteBuilder.dll">Vega.USiteBuilder.dll</ProjectItem>
+        <ProjectItem ReplaceParameters="false" TargetFileName="Vega.USiteBuilder.XML">Vega.USiteBuilder.XML</ProjectItem>
+      </Folder>
+      <Folder Name="Css" TargetFolderName="Css" />
+      <Folder Name="DocumentTypes" TargetFolderName="DocumentTypes" />
+      <Folder Name="Img" TargetFolderName="Img" />
+      <Folder Name="Masterpages" TargetFolderName="Masterpages"/>
+      <Folder Name="Scritps" TargetFolderName="Scritps" />
+      <Folder Name="UserControls" TargetFolderName="UserControls" />
+      <Folder Name="Xslt" TargetFolderName="Xslt" />
+    </Project>
+  </TemplateContent>
+</VSTemplate>

@@ -11,7 +11,6 @@
     using umbraco.cms.businesslogic.member;
 
     using Vega.USiteBuilder.Types;
-    using umbraco;
 
     /// <summary>
     /// This class contains methods for getting the strongly typed members from Umbraco
@@ -63,7 +62,7 @@
             {
                 umember = new Member(member.Id);
             }
-
+            
             umember.Email = member.Email;
             umember.LoginName = member.LoginName;
 
@@ -106,32 +105,21 @@
         /// Gets all members
         /// </summary>
         /// <returns>List of all members</returns>
-        public static IEnumerable<MemberTypeBase> GetAllMembers()
+        public static List<MemberTypeBase> GetAllMembers()
         {
-            foreach (Member member in Member.GetAllAsList())
-            {
-                MemberTypeBase m = MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(member);
-                if (m != null)
-                {
-                    yield return m;
-                }
-            }
-        }
+            List<MemberTypeBase> retVal = new List<MemberTypeBase>();
+            Member[] members = Member.GetAll;
 
-        /// <summary>
-        /// Gets all members
-        /// </summary>
-        /// <returns>List of all members</returns>
-        public static IEnumerable<T> GetAllMembers<T>() where T : MemberTypeBase
-        {
-            foreach (Member member in Member.GetAllAsList())
+            foreach (Member member in members)
             {
-                T m = MemberTypeResolver.Instance.GetTyped<T>(member);
+                MemberTypeBase m = MemberHelper.GetMember(member);
                 if (m != null)
                 {
-                    yield return m;
+                    retVal.Add(m);
                 }
             }
+
+            return retVal;
         }
 
         /// <summary>
@@ -140,16 +128,7 @@
         /// <returns></returns>
         public static MemberTypeBase GetCurrentMember()
         {
-            return MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(Member.GetCurrentMember());
-        }
-
-        /// <summary>
-        /// Get's the currently logged in member
-        /// </summary>
-        /// <returns></returns>
-        public static T GetCurrentMember<T>() where T : MemberTypeBase
-        {
-            return MemberTypeResolver.Instance.GetTyped<T>(Member.GetCurrentMember());
+            return MemberHelper.GetMember(Member.GetCurrentMember());
         }
 
         /// <summary>
@@ -166,31 +145,7 @@
 
             foreach (Member member in members)
             {
-                MemberTypeBase m = MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(member);
-                if (m != null)
-                {
-                    retVal.Add(m);
-                }
-            }
-
-            return retVal;
-        }
-
-        /// <summary>
-        /// Gets members by name
-        /// </summary>
-        /// <param name="usernameToMatch">Part or full username (login name)</param>
-        /// <param name="matchByNameInsteadOfLogin">If true, uses it compares usernameToMatch with name instead of login name</param>
-        /// <returns></returns>
-        public static List<T> GetMembersByName<T>(string usernameToMatch, bool matchByNameInsteadOfLogin) where T : MemberTypeBase
-        {
-            List<T> retVal = new List<T>();
-
-            Member[] members = Member.GetMemberByName(usernameToMatch, matchByNameInsteadOfLogin);
-
-            foreach (Member member in members)
-            {
-                T m = MemberTypeResolver.Instance.GetTyped<T>(member);
+                MemberTypeBase m = MemberHelper.GetMember(member);
                 if (m != null)
                 {
                     retVal.Add(m);
@@ -207,17 +162,7 @@
         /// <returns>Member or null if not member with given email is not found</returns>
         public static MemberTypeBase GetMemberFromEmail(string email)
         {
-            return MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(Member.GetMemberFromEmail(email));
-        }
-
-        /// <summary>
-        /// Gets member by email. Returns null if not found.
-        /// </summary>
-        /// <param name="email">Member email</param>
-        /// <returns>Member or null if not member with given email is not found</returns>
-        public static T GetMemberFromEmail<T>(string email) where T : MemberTypeBase
-        {
-            return MemberTypeResolver.Instance.GetTyped<T>(Member.GetMemberFromEmail(email));
+            return MemberHelper.GetMember(Member.GetMemberFromEmail(email));
         }
 
         /// <summary>
@@ -228,18 +173,7 @@
         /// <returns>Member found or null if no members are found</returns>
         public static MemberTypeBase GetMemberFromLoginAndEncodedPassword(string loginName, string password)
         {
-            return MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(Member.GetMemberFromLoginAndEncodedPassword(loginName, password));
-        }
-
-        /// <summary>
-        /// Gets member by login and encoded password
-        /// </summary>
-        /// <param name="loginName">Member login name</param>
-        /// <param name="password">Member password</param>
-        /// <returns>Member found or null if no members are found</returns>
-        public static T GetMemberFromLoginAndEncodedPassword<T>(string loginName, string password) where T : MemberTypeBase
-        {
-            return MemberTypeResolver.Instance.GetTyped<T>(Member.GetMemberFromLoginAndEncodedPassword(loginName, password));
+            return MemberHelper.GetMember(Member.GetMemberFromLoginAndEncodedPassword(loginName, password));
         }
 
         /// <summary>
@@ -249,17 +183,7 @@
         /// <returns>Member or null if member is not found</returns>
         public static MemberTypeBase GetMemberFromLoginName(string loginName)
         {
-            return MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(Member.GetMemberFromLoginName(loginName));
-        }
-
-        /// <summary>
-        /// Gets member by login name
-        /// </summary>
-        /// <param name="loginName">Member login name</param>
-        /// <returns>Member or null if member is not found</returns>
-        public static T GetMemberFromLoginName<T>(string loginName) where T : MemberTypeBase
-        {
-            return MemberTypeResolver.Instance.GetTyped<T>(Member.GetMemberFromLoginName(loginName));
+            return MemberHelper.GetMember(Member.GetMemberFromLoginName(loginName));
         }
 
         /// <summary>
@@ -270,18 +194,7 @@
         /// <returns>Member or null if no members are founds</returns>
         public static MemberTypeBase GetMemberFromLoginNameAndPassword(string loginName, string password)
         {
-            return MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(Member.GetMemberFromLoginNameAndPassword(loginName, password));
-        }
-
-        /// <summary>
-        /// Gets member from login name and password.
-        /// </summary>
-        /// <param name="loginName">Member login name</param>
-        /// <param name="password">Password</param>
-        /// <returns>Member or null if no members are founds</returns>
-        public static T GetMemberFromLoginNameAndPassword<T>(string loginName, string password) where T : MemberTypeBase
-        {
-            return MemberTypeResolver.Instance.GetTyped<T>(Member.GetMemberFromLoginNameAndPassword(loginName, password));
+            return MemberHelper.GetMember(Member.GetMemberFromLoginNameAndPassword(loginName, password));
         }
 
         /// <summary>
@@ -298,41 +211,14 @@
             {
                 member = new Member(id);
             }
-            catch
-            {
+            catch 
+            { 
                 // member is not found
             }
 
             if (member != null)
             {
-                retVal = MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(member);
-            }
-
-            return retVal;
-        }
-
-        /// <summary>
-        /// Gets member by id
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public static T GetMemberById<T>(int id) where T : MemberTypeBase
-        {
-            T retVal = null;
-            Member member = null;
-
-            try
-            {
-                member = new Member(id);
-            }
-            catch
-            {
-                // member is not found
-            }
-
-            if (member != null)
-            {
-                retVal = MemberTypeResolver.Instance.GetTyped<T>(member);
+                retVal = MemberHelper.GetMember(member);
             }
 
             return retVal;
@@ -345,17 +231,108 @@
         /// <returns>Member</returns>
         public static MemberTypeBase GetMember(Member member)
         {
-            return MemberTypeResolver.Instance.GetTyped<MemberTypeBase>(member);
-        }
+            if (member == null)
+            {
+                return null;
+            }
 
-        /// <summary>
-        /// Get's the member.
-        /// </summary>
-        /// <param name="member">Member</param>
-        /// <returns>Member</returns>
-        public static T GetMember<T>(Member member) where T : MemberTypeBase
-        {
-            return MemberTypeResolver.Instance.GetTyped<T>(member);
+            MemberTypeBase retVal = null;
+
+            if (member.ContentType.Alias == null)
+            {
+                throw new Exception(string.Format("Member has no associated member type. Member: id: {0}, login name: {1}", member.Id, member.LoginName));
+            }
+
+            Type typeMemberType = MemberTypeManager.GetMemberTypeType(member.ContentType.Alias);
+            if (typeMemberType != null)
+            {
+                retVal = ((MemberTypeBase)Activator.CreateInstance(typeMemberType, new object[] { member.LoginName, member.Email, member.Password }));
+
+                if (retVal == null)
+                {
+                    throw new ArgumentException(string.Format("Member type class whose member type alias is '{0}' not found!. Member: (id: {1}, login name: {2}).",
+                        member.ContentType.Alias, member.Id, member.LoginName));
+                }
+
+                retVal.Id = member.Id;
+                retVal.Email = member.Email;
+                retVal.UniqueId = member.UniqueId;
+                retVal.CreateDate = member.CreateDateTime;
+
+                foreach (PropertyInfo propInfo in typeMemberType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    MemberTypePropertyAttribute propAttr = Util.GetAttribute<MemberTypePropertyAttribute>(propInfo);
+                    if (propAttr == null)
+                    {
+                        continue; // skip this property - not part of a Document Type
+                    }
+
+                    string propertyName;
+                    string propertyAlias;
+                    MemberTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
+
+                    umbraco.cms.businesslogic.property.Property property = member.getProperty(propertyAlias);
+
+                    object value = null;
+                    try
+                    {
+                        if (property == null)
+                        {
+                            value = null;
+                        }
+                        else if (propInfo.PropertyType.Equals(typeof(System.Boolean)))
+                        {
+                            if (property.Value == null || String.IsNullOrEmpty(Convert.ToString(property.Value)) 
+                                || Convert.ToString(property.Value) == "0")
+                            {
+                                value = false;
+                            }
+                            else
+                            {
+                                value = true;
+                            }
+                        }
+                        else if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
+                        {
+                            // will be transformed later. TODO: move transformation here
+                            value = property.Value;
+                        }
+                        else if (propInfo.PropertyType.IsGenericType &&
+                                 propInfo.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        {
+                            if (String.IsNullOrEmpty(Convert.ToString(property.Value)))
+                            {
+                                value = null;
+                            }
+                            else
+                            {
+                                value = Convert.ChangeType(property.Value, Nullable.GetUnderlyingType(propInfo.PropertyType));
+                            }
+
+                            // TODO: If data type is DateTime and is nullable and is less than 1.1.1000 than set it to NULL
+                        }
+                        else
+                        {
+                            value = Convert.ChangeType(property.Value, propInfo.PropertyType);
+                        }
+
+                        if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
+                        {
+                            value = ContentHelper.PropertyConvertors[propInfo.PropertyType].ConvertValueWhenRead(value);
+                        }
+
+                        propInfo.SetValue(retVal, value, null);
+                    }
+                    catch (Exception exc)
+                    {
+                        throw new Exception(string.Format("Cannot set the value of a Member type property {0}.{1} (member type: {2}) to value: '{3}' (value type: {4}). Error: {5}",
+                            typeMemberType.Name, propInfo.Name, propInfo.PropertyType.FullName,
+                            value, value != null ? value.GetType().FullName : "null", exc.Message));
+                    }
+                }
+            }
+
+            return retVal;
         }
         #endregion
 
@@ -453,117 +430,5 @@
             return retVal;
         }
         #endregion
-
-        internal static bool PopuplateInstance<T>(Member member, Type typeMemberType, T typedMember) where T : MemberTypeBase
-        {
-            if (member == null)
-            {
-                return false;
-            }
-
-            if (member.ContentType.Alias == null)
-            {
-                throw new Exception(string.Format("Member has no associated member type. Member: id: {0}, login name: {1}", member.Id, member.LoginName));
-            }
-
-            typedMember.Id = member.Id;
-            typedMember.Email = member.Email;
-            typedMember.UniqueId = member.UniqueId;
-            typedMember.CreateDate = member.CreateDateTime;
-            typedMember.Source = member;
-
-            foreach (PropertyInfo propInfo in typeMemberType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                MemberTypePropertyAttribute propAttr = Util.GetAttribute<MemberTypePropertyAttribute>(propInfo);
-                if (propAttr == null || (propInfo.GetGetMethod() != null && propInfo.GetGetMethod().IsVirtual))
-                {
-                    continue; // skip this property - not part of a Document Type or is virtual in which case value will be intercepted
-                }
-
-                object value = null;
-                try
-                {
-                    value = GetPropertyValue(member, propInfo, propAttr);
-                    propInfo.SetValue(typedMember, value, null);
-                }
-                catch (Exception exc)
-                {
-                    throw new Exception(string.Format("Cannot set the value of a Member type property {0}.{1} (member type: {2}) to value: '{3}' (value type: {4}). Error: {5}",
-                        typeMemberType.Name, propInfo.Name, propInfo.PropertyType.FullName,
-                        value, value != null ? value.GetType().FullName : "null", exc.Message));
-                }
-            }
-
-            return true;
-        }
-
-        internal static object GetPropertyValue(Member member, PropertyInfo propInfo)
-        {
-            return GetPropertyValue(member, propInfo, null);
-        }
-
-        internal static object GetPropertyValue(Member member, PropertyInfo propInfo, MemberTypePropertyAttribute propAttr)
-        {
-            object value = null;
-
-            string propertyName;
-            string propertyAlias;
-
-            if (propAttr == null)
-            {
-                propAttr = Util.GetAttribute<MemberTypePropertyAttribute>(propInfo);
-            }
-
-            MemberTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
-
-            umbraco.cms.businesslogic.property.Property property = member.getProperty(propertyAlias);
-
-            if (property == null)
-            {
-                value = null;
-            }
-            else if (propInfo.PropertyType.Equals(typeof(System.Boolean)))
-            {
-                if (property.Value == null || String.IsNullOrEmpty(Convert.ToString(property.Value))
-                    || Convert.ToString(property.Value) == "0")
-                {
-                    value = false;
-                }
-                else
-                {
-                    value = true;
-                }
-            }
-            else if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
-            {
-                // will be transformed later. TODO: move transformation here
-                value = property.Value;
-            }
-            else if (propInfo.PropertyType.IsGenericType &&
-                     propInfo.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-            {
-                if (String.IsNullOrEmpty(Convert.ToString(property.Value)))
-                {
-                    value = null;
-                }
-                else
-                {
-                    value = Convert.ChangeType(property.Value, Nullable.GetUnderlyingType(propInfo.PropertyType));
-                }
-
-                // TODO: If data type is DateTime and is nullable and is less than 1.1.1000 than set it to NULL
-            }
-            else
-            {
-                value = Convert.ChangeType(property.Value, propInfo.PropertyType);
-            }
-
-            if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
-            {
-                value = ContentHelper.PropertyConvertors[propInfo.PropertyType].ConvertValueWhenRead(value);
-            }
-
-            return value;
-        }
     }
 }

@@ -11,8 +11,8 @@
     {
         public DocumentTypePropertyAttribute() 
         {
-            // setting up default values            
-            
+            // setting up default values
+            this.Tab = "";
             this.Mandatory = false;
             this.ValidationRegExp = "";
             this.Description = "";
@@ -27,9 +27,10 @@
         /// <param name="type">Umbraco Data Type related with this property</param>
         public DocumentTypePropertyAttribute(UmbracoPropertyType type) : this()
         {
-            this.Type = type;            
+            this.Type = type;
+
         }
-        
+
         /// <summary>
         /// Alias of this property.  
         /// </summary>

@@ -1,20 +1,14 @@
 ﻿using umbraco.DataLayer;
-using Umbraco.Core.Events;
 
 namespace Vega.USiteBuilder
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
-    using System.Text.RegularExpressions;
-
-    using Umbraco.Core;
-    using Umbraco.Core.Models;
-    using Umbraco.Core.Services;
-
-    using Vega.USiteBuilder.DocumentTypeBuilder;
+    using System.Collections.Generic;
+    using umbraco.cms.businesslogic;
+    using umbraco.cms.businesslogic.template;
+    using umbraco.cms.businesslogic.web;
 
     /// <summary>
     /// Manages document types synchronization
@@ -23,11 +17,7 @@ namespace Vega.USiteBuilder
     {
         // Holds all document types found in 
         // Type = Document type type (subclass of DocumentTypeBase), string = document type alias
-        private static readonly Dictionary<string, Type> DocumentTypes = new Dictionary<string, Type>();        
-        private static readonly Dictionary<string, int> DocumentTypesId = new Dictionary<string, int>();
-        private static List<ContentComparison> DocumentTypesComparisonSummary = new List<ContentComparison>();
-        static readonly IContentTypeService ContentTypeService = ApplicationContext.Current.Services.ContentTypeService;
-        static readonly IFileService FileService = ApplicationContext.Current.Services.FileService;
+        private static Dictionary<string, Type> _documentTypes = new Dictionary<string, Type>();
 
         // indicates if any of synced document types had a default value
         private bool _hadDefaultValues = false;
@@ -38,69 +28,55 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static bool HasSynchronizedDocumentTypes()
         {
-            return DocumentTypes.Count > 0;
+            return _documentTypes.Count > 0;
         }
 
-        /// <summary>
-        /// Main mathod for synchronizing document types
-        /// </summary>
+        public void SynchronizeDocumentType(Type siteBuilderType)
+        {
+            _documentTypes.Clear();
+
+            SynchronizeDocumentType(siteBuilderType, siteBuilderType.BaseType);
+
+            // create all children document types
+            SynchronizeDocumentTypes(siteBuilderType);
+
+            SynchronizeAllowedChildContentType(siteBuilderType);
+
+            // process all allowed children document types
+            SynchronizeAllowedChildContentTypes(siteBuilderType);
+
+            if (_hadDefaultValues) // if there were default values set subscribe to News event in which we'll set default values.
+            {
+                // subscribe to New event
+                Document.New += Document_New;
+            }
+        }
+
+        public void DeleteDocumentType(string alias)
+        {
+            DocumentType.GetByAlias(alias).delete();
+        }
+
         public void Synchronize()
         {
-            DocumentTypes.Clear();
-            DocumentTypesId.Clear();
-            DocumentTypesComparisonSummary.Clear();
-
-
-#if DEBUG
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-#endif
-            // Check which document types have been changed
-            // Does not check relations between document types (allowed childs and allowable parents) since it engages similar resources as 
-            // method for updating relations
-            DocumentTypesComparisonSummary = DocumentTypeComparer.PreviewDocumentTypeChanges(out _hadDefaultValues);
-
-            // store node id for existing document types in dictionary (to avoid unnecessary API calls)
-            foreach (var dtItem in DocumentTypesComparisonSummary.Where(dt => dt.DocumentTypeStatus != Status.New))
-            {
-                if (DocumentTypesId.ContainsKey(dtItem.Alias) == false)
-                {
-                    DocumentTypesId.Add(dtItem.Alias, dtItem.DocumentTypeId);
-                }
-            }
-
-#if DEBUG
-            timer.Stop();
-            StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'DocumentTypeManager.Synchronize' - only preview of type changes: {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
+            _documentTypes.Clear();
 
             this.SynchronizeDocumentTypes(typeof(DocumentTypeBase));
+            this.SynchronizeAllowedChildContentTypes(typeof(DocumentTypeBase));
+            this.SynchronizeReverseAllowedChildContentTypes(typeof(DocumentTypeBase));
 
-#if DEBUG
-            timer.Stop();
-            StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'DocumentTypeManager.SynchronizeDocumentTypes': {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
-
-            this.SynchronizeChildNodes(typeof(DocumentTypeBase));
-
-#if DEBUG
-            timer.Stop();
-            StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'DocumentTypeManager.SynchronizeChildNodes': {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
-
-            if (this._hadDefaultValues) // if there were default values set subscribe to Creating event in which we'll set default values.
+            if (this._hadDefaultValues) // if there were default values set subscribe to News event in which we'll set default values.
             {
-                // Subscribe to Creating event
-                ContentService.Creating += ContentServiceOnCreating;
+                // subscribe to New event
+                Document.New += Document_New;
             }
         }
 
-        private void ContentServiceOnCreating(IContentService sender, NewEventArgs<IContent> newEventArgs)
+
+        #region [Document_New]
+        void Document_New(Document document, NewEventArgs e)
         {
-            Type typeDocType = DocumentTypeManager.GetDocumentTypeType(newEventArgs.Alias);
+            Type typeDocType = DocumentTypeManager.GetDocumentTypeType(document.ContentType.Alias);
             if (typeDocType != null)
             {
                 foreach (PropertyInfo propInfo in typeDocType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
@@ -113,13 +89,13 @@ namespace Vega.USiteBuilder
 
                     string propertyName;
                     string propertyAlias;
-                    ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
+                    DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
                     if (propAttr.DefaultValue != null)
                     {
                         try
                         {
-                            newEventArgs.Entity.SetValue(propertyAlias, propAttr.DefaultValue);
+                            document.getProperty(propertyAlias).Value = propAttr.DefaultValue;
                         }
                         catch (Exception exc)
                         {
@@ -130,61 +106,37 @@ namespace Vega.USiteBuilder
                 }
             }
         }
+        #endregion
 
+        #region [Static methods]
         public static string GetDocumentTypeAlias(Type typeDocType)
         {
             string alias;
-            bool aliasUsed = false;
 
             DocumentTypeAttribute docTypeAttr = GetDocumentTypeAttribute(typeDocType);
 
             if (!String.IsNullOrEmpty(docTypeAttr.Alias))
             {
                 alias = docTypeAttr.Alias;
-                aliasUsed = true;
             }
             else
             {
                 alias = typeDocType.Name;
             }
-
-            if (alias.ToLower() != alias.ToSafeAlias().ToLower())
-                throw new ArgumentException(string.Format("The {0} '{1}', for the document type '{2}', is invalid.", (aliasUsed ? "alias" : "name"), alias, typeDocType.Name), "Alias");
-
+            /*
+            if (alias == "File" || alias == "Folder" || alias == "Image") // These are reserved Document type names
+            {
+                alias += "_";
+            }
+            */
             return alias;
         }
-
-        public static int GetDocumentTypeId(Type typeDocType)
-        {
-            int id;
-
-            string alias = GetDocumentTypeAlias(typeDocType);
-
-            if (!DocumentTypesId.TryGetValue(alias, out id))
-            {
-                id = -1;
-            }
-
-            return id;
-        }
-
-        public static int GetDocumentTypeId(string alias)
-        {
-            int id;
-
-            if (!DocumentTypesId.TryGetValue(alias, out id))
-            {
-                id = -1;
-            }
-            return id;
-        }
-
 
         public static void ReadPropertyNameAndAlias(PropertyInfo propInfo, DocumentTypePropertyAttribute propAttr,
             out string name, out string alias)
         {
-
-
+            
+               
             // set name
             name = string.IsNullOrEmpty(propAttr.Name) ? propInfo.Name : propAttr.Name;
 
@@ -192,33 +144,32 @@ namespace Vega.USiteBuilder
             alias = propInfo.Name.Substring(0, 1).ToLower();
 
             // if an alias has been set, use that one explicitly
-            if (!String.IsNullOrEmpty(propAttr.Alias))
+            if (!String.IsNullOrEmpty(propAttr.Alias)) 
             {
-                alias = propAttr.Alias;
+	            alias = propAttr.Alias;
 
-                // otherwise
+            // otherwise
+            } else {
+
+	            // create the alias from the name 
+	            if (propInfo.Name.Length > 1) {
+	                alias += propInfo.Name.Substring(1, propInfo.Name.Length - 1);
+	            }
+
+	            // This is required because it seems that Umbraco has a bug when property type alias is called pageName.
+	            if (alias == "pageName") {
+	                alias += "_";
+	            }
+
             }
-            else
-            {
 
-                // create the alias from the name 
-                if (propInfo.Name.Length > 1)
-                {
-                    alias += propInfo.Name.Substring(1, propInfo.Name.Length - 1);
-                }
-
-                // This is required because it seems that Umbraco has a bug when property type alias is called pageName.
-                if (alias == "pageName")
-                {
-                    alias += "_";
-                }
-            }
         }
 
-        public static IContentType GetDocumentType(Type typeDocType)
+        public static DocumentType GetDocumentType(Type typeDocType)
         {
-            return ContentTypeService.GetContentType(GetDocumentTypeAlias(typeDocType));
+            return DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(typeDocType));
         }
+
 
         public static Type GetDocumentTypeType(string documentTypeAlias)
         {
@@ -229,30 +180,23 @@ namespace Vega.USiteBuilder
 
             Type retVal = null;
 
-            if (DocumentTypes.ContainsKey(documentTypeAlias))
+            if (_documentTypes.ContainsKey(documentTypeAlias))
             {
-                retVal = DocumentTypes[documentTypeAlias];
+                retVal = _documentTypes[documentTypeAlias];
             }
 
             return retVal;
         }
+        #endregion
+
+        #region [Document types creation]
 
         private static void FillDocumentTypes(Type baseTypeDocType)
         {
             foreach (Type typeDocType in Util.GetFirstLevelSubTypes(baseTypeDocType))
             {
                 string docTypeAlias = GetDocumentTypeAlias(typeDocType);
-
-                // Prevent "An item with the same key has already been added."
-                if (DocumentTypes.ContainsKey(docTypeAlias))
-                {
-                    // Reassign the value.
-                    DocumentTypes[docTypeAlias] = typeDocType;
-                }
-                else
-                {
-                    DocumentTypes.Add(docTypeAlias, typeDocType);
-                }
+                _documentTypes.Add(docTypeAlias, typeDocType);
 
                 // create all children document types
                 FillDocumentTypes(typeDocType);
@@ -271,30 +215,12 @@ namespace Vega.USiteBuilder
             }
         }
 
-
         private void SynchronizeDocumentType(Type typeDocType, Type baseTypeDocType)
         {
-            // Get DocumentTypeAttribute attribute for typeDocType
-            DocumentTypeAttribute docTypeAttr = GetDocumentTypeAttribute(typeDocType);
+            DocumentTypeAttribute docTypeAttr = DocumentTypeManager.GetDocumentTypeAttribute(typeDocType);
+
             string docTypeName = string.IsNullOrEmpty(docTypeAttr.Name) ? typeDocType.Name : docTypeAttr.Name;
-
-            string docTypeAlias = string.Empty;
-            if (!String.IsNullOrEmpty(docTypeAttr.Alias))
-            {
-                docTypeAlias = docTypeAttr.Alias;
-            }
-            else
-            {
-                docTypeAlias = typeDocType.Name;
-            }
-
-            DocumentTypes.Add(docTypeAlias, typeDocType);
-
-            // If document type is not changed, skip update
-            if (DocumentTypesComparisonSummary.Exists(dt => (dt.DocumentTypeStatus == Status.Same) && (dt.Alias == docTypeAlias)))
-            {
-                return;
-            }
+            string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeDocType);
 
             try
             {
@@ -306,75 +232,44 @@ namespace Vega.USiteBuilder
                     docTypeAlias, typeDocType.FullName, typeDocType.Assembly.FullName, exc.Message));
             }
 
-            // If parent is some other DT, retrieve parentID; otherwise it's -1              
-            int parentId = -1;
-            if (baseTypeDocType != typeof(DocumentTypeBase))
+            _documentTypes.Add(docTypeAlias, typeDocType);
+
+            DocumentType docType = DocumentType.GetByAlias(docTypeAlias);
+            if (docType == null)
             {
-                parentId = GetDocumentTypeId(baseTypeDocType);
+                // if name is not set, use name of the type
+                docType = DocumentType.MakeNew(this.siteBuilderUser, docTypeName);
             }
 
-            // Get DT with same alias from Umbraco if exists
-            IContentType contentType = ContentTypeService.GetContentType(docTypeAlias);
+            docType.Text = docTypeName;
+            docType.Alias = docTypeAlias;
+            docType.IconUrl = docTypeAttr.IconUrl;
+            docType.Thumbnail = docTypeAttr.Thumbnail;
+            docType.Description = docTypeAttr.Description;
 
-            if (contentType == null)
+            if (baseTypeDocType == typeof(DocumentTypeBase))
             {
-                // New DT
-                if (parentId != -1)
-                {
-                    IContentType parentType = ContentTypeService.GetContentType(parentId);
-                    contentType = new ContentType(parentType);
-                }
-                else
-                {
-                    contentType = new ContentType(parentId);
-                }
+                docType.MasterContentType = 0;
             }
             else
             {
-                // Existing DT
-                if (contentType.ParentId != parentId)
-                {
-                    throw new Exception(string.Format("Document type inheritance for document type with '{0}' alias, cannot be updated.", docTypeAlias));
-                }
+                docType.MasterContentType = DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(baseTypeDocType)).Id;
             }
 
-            contentType.Name = docTypeName;
-            contentType.Alias = docTypeAlias;
-            contentType.Icon = docTypeAttr.IconUrl;
-            contentType.Thumbnail = docTypeAttr.Thumbnail;
-            contentType.Description = docTypeAttr.Description;
-            contentType.AllowedAsRoot = docTypeAttr.AllowAtRoot;
+            this.SetAllowedTemplates(docType, docTypeAttr, typeDocType);
 
-            SetAllowedTemplates(contentType, docTypeAttr, typeDocType);
+            this.SynchronizeDocumentTypeProperties(typeDocType, docType);
 
-            SynchronizeDocumentTypeProperties(typeDocType, contentType, docTypeAttr);
-
-            ContentTypeService.Save(contentType);
-
-            // store node id for new document types in dictionary (to avoid unnecessary API calls)
-            if (DocumentTypesId.ContainsKey(contentType.Alias) == false)
-            {
-                DocumentTypesId.Add(contentType.Alias, contentType.Id);
-            }
+            docType.Save();
         }
 
-        private void SetAllowedTemplates(IContentType contentType, DocumentTypeAttribute docTypeAttr, Type typeDocType)
+        private void SetAllowedTemplates(DocumentType docType, DocumentTypeAttribute docTypeAttr, Type typeDocType)
         {
-            List<ITemplate> allowedTemplates = GetAllowedTemplates(docTypeAttr, typeDocType);
+            List<Template> allowedTemplates = GetAllowedTemplates(docTypeAttr, typeDocType);
+
             try
             {
-                if ((allowedTemplates.Count == 0) && (contentType.AllowedTemplates.Count() != 0))
-                {    
-                    // Clear all allowed templates and default template
-                    foreach (var templateItem in contentType.AllowedTemplates)
-                    {
-                        contentType.RemoveTemplate(templateItem);
-                    }                    
-                }
-                else 
-                {
-                    contentType.AllowedTemplates = allowedTemplates.ToArray();
-                }
+                docType.allowedTemplates = allowedTemplates.ToArray();
             }
             catch (SqlHelperException e)
             {
@@ -382,45 +277,47 @@ namespace Vega.USiteBuilder
                     GetDocumentTypeAlias(typeDocType), string.Join(", ", allowedTemplates)));
             }
 
-            ITemplate defaultTemplate = GetDefaultTemplate(docTypeAttr, typeDocType, allowedTemplates);
+            int defaultTemplateId = GetDefaultTemplate(docTypeAttr, typeDocType, allowedTemplates);
 
-            if (defaultTemplate != null)
+            if (defaultTemplateId != 0)
             {
-                contentType.SetDefaultTemplate(defaultTemplate);
+                docType.DefaultTemplate = defaultTemplateId;
             }
-            else if (contentType.AllowedTemplates.Count() == 1) // if only one template is defined for this doc type -> make it default template for this doc type
+            else if (docType.allowedTemplates.Length == 1) // if only one template is defined for this doc type -> make it default template for this doc type
             {
-                contentType.SetDefaultTemplate(contentType.AllowedTemplates.First());
+                docType.DefaultTemplate = docType.allowedTemplates[0].Id;
             }
         }
 
-        internal static ITemplate GetDefaultTemplate(DocumentTypeAttribute docTypeAttr, Type typeDocType, List<ITemplate> allowedTemplates)
+        internal static int GetDefaultTemplate( DocumentTypeAttribute docTypeAttr, Type typeDocType, List<Template> allowedTemplates)
         {
+            int defaultTemplateId = 0;
+
             if (!String.IsNullOrEmpty(docTypeAttr.DefaultTemplateAsString))
             {
-                ITemplate defaultTemplate = allowedTemplates.FirstOrDefault(t => t.Alias == docTypeAttr.DefaultTemplateAsString);
+                Template defaultTemplate = allowedTemplates.FirstOrDefault(t => t.Alias == docTypeAttr.DefaultTemplateAsString);
                 if (defaultTemplate == null)
                 {
                     throw new Exception(string.Format("Document type '{0}' has a default template '{1}' but that template does not use this document type",
                         GetDocumentTypeAlias(typeDocType), docTypeAttr.DefaultTemplateAsString));
                 }
 
-                return defaultTemplate;
+                defaultTemplateId =  defaultTemplate.Id;
             }
 
-            return null;
+            return defaultTemplateId;
         }
 
-        internal static List<ITemplate> GetAllowedTemplates(DocumentTypeAttribute docTypeAttr, Type typeDocType)
+        internal static List<Template> GetAllowedTemplates(DocumentTypeAttribute docTypeAttr, Type typeDocType)
         {
-            var allowedTemplates = new List<ITemplate>();
+            List<Template> allowedTemplates = new List<Template>();
 
             // Use AllowedTemplates if given
             if (docTypeAttr.AllowedTemplates != null)
             {
                 foreach (string templateName in docTypeAttr.AllowedTemplates)
                 {
-                    ITemplate template = FileService.GetTemplate(templateName);
+                    Template template = Template.GetByAlias(templateName);
                     if (template != null)
                     {
                         allowedTemplates.Add(template);
@@ -428,34 +325,20 @@ namespace Vega.USiteBuilder
                     else
                     {
                         throw new Exception(string.Format("Template '{0}' does not exists. That template is set as allowed template for document type '{1}'",
-                            templateName, GetDocumentTypeAlias(typeDocType)));
+                            templateName, DocumentTypeManager.GetDocumentTypeAlias(typeDocType)));
                     }
                 }
             }
             else
             {
-                if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.WebForms)
+                // if AllowedTemplates if null, use all generic templates
+                foreach (Type typeTemplate in TemplateManager.GetAllTemplates(typeDocType))
                 {
-                    // if AllowedTemplates is null, use all generic templates
-                    foreach (Type typeTemplate in TemplateManager.GetAllTemplates(typeDocType))
-                    {
-                        ITemplate template = FileService.GetTemplate(typeTemplate.Name);
+                    Template template = Template.GetByAlias(typeTemplate.Name);
 
-                        if (template != null)
-                        {
-                            allowedTemplates.Add(template);
-                        }
-                    }
-                }
-                else if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.Mvc)
-                {
-                    // if AllowedTemplates is null, use all generic templates
-                    foreach (ITemplate template in FileService.GetTemplates())
+                    if (template != null)
                     {
-                        if (IsViewForDocumentType(typeDocType.Name, template.Content))
-                        {
-                            allowedTemplates.Add(template);
-                        }
+                        allowedTemplates.Add(template);
                     }
                 }
             }
@@ -470,11 +353,11 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         internal static DocumentTypeAttribute GetDocumentTypeAttribute(Type typeDocType)
         {
-            var retVal = Util.GetAttribute<DocumentTypeAttribute>(typeDocType);
+            DocumentTypeAttribute retVal = Util.GetAttribute<DocumentTypeAttribute>(typeDocType);
 
             if (retVal == null)
             {
-                retVal = CreateDefaultDocumentTypeAttribute(typeDocType);
+                retVal = DocumentTypeManager.CreateDefaultDocumentTypeAttribute(typeDocType);
             }
 
             return retVal;
@@ -482,7 +365,7 @@ namespace Vega.USiteBuilder
 
         private static DocumentTypeAttribute CreateDefaultDocumentTypeAttribute(Type typeDocType)
         {
-            var retVal = new DocumentTypeAttribute();
+            DocumentTypeAttribute retVal = new DocumentTypeAttribute();
 
             retVal.Name = typeDocType.Name;
             retVal.IconUrl = DocumentTypeDefaultValues.IconUrl;
@@ -490,201 +373,168 @@ namespace Vega.USiteBuilder
 
             return retVal;
         }
+        #endregion
 
-
-        private void SynchronizeDocumentTypeProperties(Type typeDocType, IContentType docType, DocumentTypeAttribute documentTypeAttribute)
+        #region [Document type properties synchronization]
+        private void SynchronizeDocumentTypeProperties(Type typeDocType, DocumentType docType)
         {
-            SynchronizeContentTypeProperties(typeDocType, docType, documentTypeAttribute, out _hadDefaultValues);
+            this.SynchronizeContentTypeProperties(typeDocType, docType, out this._hadDefaultValues);
         }
+        #endregion
 
-        private void SynchronizeChildNodes(Type baseTypeDocType)
-        {
-
-            // Allowed child nodetypes can be defined in two ways:
-            //      1. Using "AllowedChildNodeTypes" property which defines allowable children
-            //      2. Using "AllowedChildNodeTypeOf" property which defines allowable parents
-            //
-            //      Final list of allowable children is union between these two properties            
-            
-            Dictionary<int, List<ContentTypeSort>> parentsToUpdate = new Dictionary<int, List<ContentTypeSort>>();
-
-            // Retrieve list of allowable parents for every node
-            foreach (Type type in Util.GetAllSubTypes(baseTypeDocType))
-            {
-                GetAllowableParents(type, parentsToUpdate);                
-            }
-
-            // Create list of allowable children using "AllowedChildNodeTypes" property and add additional children retrieved in previous method
-            SynchronizeAllowedChildContentTypes(baseTypeDocType, parentsToUpdate);
-        }
-
-        private void SynchronizeAllowedChildContentTypes(Type baseTypeDocType, Dictionary<int, List<ContentTypeSort>> parents)
+        #region [Allowed child node types synchronization]
+        private void SynchronizeAllowedChildContentTypes(Type baseTypeDocType)
         {
             foreach (Type type in Util.GetFirstLevelSubTypes(baseTypeDocType))
             {
-                this.SynchronizeAllowedChildContentType(type, parents);
+                this.SynchronizeAllowedChildContentType(type);
 
                 // process all children document types
-                this.SynchronizeAllowedChildContentTypes(type, parents);
+                this.SynchronizeAllowedChildContentTypes(type);
             }
         }
 
-        /// <summary>
-        /// Create list of parents that has allowable children defined via "AllowedChildNodeTypesOf" property
-        /// </summary>
-        /// <param name="typeDocType"></param>
-        /// <param name="parents"></param>
-        private void GetAllowableParents(Type typeDocType, Dictionary<int, List<ContentTypeSort>> parents)
+        private void SynchronizeAllowedChildContentType(Type typeDocType)
         {
             DocumentTypeAttribute docTypeAttr = Util.GetAttribute<DocumentTypeAttribute>(typeDocType);
             if (docTypeAttr != null)
             {
-                if (docTypeAttr.AllowedChildNodeTypeOf != null && docTypeAttr.AllowedChildNodeTypeOf.Length > 0)
+                DocumentType docType = DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(typeDocType));
+
+                List<int> allowedTypeIds = new List<int>();
+
+                if (docTypeAttr.AllowedChildNodeTypes != null)
                 {
-                    List<ContentTypeSort> tmpChilds = null;
+                    foreach (Type allowedType in docTypeAttr.AllowedChildNodeTypes)
+                    {
+                        int id = DocumentType.GetByAlias(DocumentTypeManager.GetDocumentTypeAlias(allowedType)).Id;
+                        if (!allowedTypeIds.Contains(id))
+                        {
+                            allowedTypeIds.Add(id);
+                        }
+                    }
+                }
 
-                    string childDocumentTypeAlias = GetDocumentTypeAlias(typeDocType);
-                    int childDocumentTypeId = GetDocumentTypeId(childDocumentTypeAlias);
+                docType.AllowedChildContentTypeIDs = allowedTypeIds.ToArray();
 
-                    if (childDocumentTypeId != -1)
+                docType.Save();
+            }
+        }
+        #endregion
+
+        #region ["Allowed child node type of" synchronization]
+        private void SynchronizeReverseAllowedChildContentTypes(Type baseTypeDocType)
+        {
+            // process a reverse-lookup if there's any document types to be sync'ed
+            if (DocumentTypeManager.HasSynchronizedDocumentTypes())
+            {
+                foreach (Type docType in DocumentTypeManager._documentTypes.Values)
+                {
+                    // retrieves the document type attribute, containing all the info
+                    // required for synchronisation
+                    var docTypeAttr = 
+                        DocumentTypeManager.GetDocumentTypeAttribute(docType);
+
+                    var docTypeNode = DocumentTypeManager.GetDocumentType(docType);
+
+                    if (docTypeNode != null
+                        && docTypeAttr.AllowedChildNodeTypeOf != null
+                        && docTypeAttr.AllowedChildNodeTypeOf.Length > 0)
                     {
                         // enumerates through each one of the parent node type
                         foreach (Type parent in docTypeAttr.AllowedChildNodeTypeOf)
                         {
-                            string parentDocumentTypeAlias = GetDocumentTypeAlias(parent);
-                            int parentDocumentTypeId = GetDocumentTypeId(parentDocumentTypeAlias);
+                            var parentDocType = DocumentTypeManager.GetDocumentType(parent);
 
-                            if (parents.TryGetValue(parentDocumentTypeId, out tmpChilds))
+                            if (parentDocType != null)
                             {
-                                tmpChilds.Add(new ContentTypeSort { Id = new Lazy<int>(() => childDocumentTypeId), Alias = childDocumentTypeAlias });
-                                parents[parentDocumentTypeId] = tmpChilds;
-                            }
-                            else
-                            {
-                                tmpChilds = new List<ContentTypeSort>();
-                                tmpChilds.Add(new ContentTypeSort { Id = new Lazy<int>(() => childDocumentTypeId), Alias = childDocumentTypeAlias });
-                                parents.Add(parentDocumentTypeId, tmpChilds);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+                                List<int> allowedChildNodeTypes = 
+                                    new List<int>(parentDocType.AllowedChildContentTypeIDs);
 
-        /// <summary>
-        /// Updates list of allowable children
-        /// </summary>
-        /// <param name="typeDocType"></param>
-        /// <param name="parents"></param>
-        private void SynchronizeAllowedChildContentType(Type typeDocType, Dictionary<int, List<ContentTypeSort>> parents)
-        {
-            int tmpDocTypeId = GetDocumentTypeId(typeDocType);
-            List<ContentTypeSort> additionalAllowableTypes;
-            parents.TryGetValue(tmpDocTypeId, out additionalAllowableTypes);
-
-            DocumentTypeAttribute docTypeAttr = Util.GetAttribute<DocumentTypeAttribute>(typeDocType);
-            if (docTypeAttr != null)
-            {
-                IContentType contentType = ContentTypeService.GetContentType(GetDocumentTypeAlias(typeDocType));
-                List<ContentTypeSort> allowedTypeIds = new List<ContentTypeSort>();
-
-                // If "AllowedChildNodeTypes" property has allowable children
-                if (docTypeAttr.AllowedChildNodeTypes != null && docTypeAttr.AllowedChildNodeTypes.Length > 0)
-                {
-                    foreach (Type allowedType in docTypeAttr.AllowedChildNodeTypes)
-                    {
-                        string allowedContentTypeAlias = GetDocumentTypeAlias(allowedType);
-
-                        int allowedContentTypeId = GetDocumentTypeId(allowedContentTypeAlias);
-
-                        // Adds children defined in "AllowedChildNodeTypes" property
-                        if (!allowedTypeIds.Any(s => s.Id.Value == allowedContentTypeId))
-                        {
-                            allowedTypeIds.Add(new ContentTypeSort { Alias = allowedContentTypeAlias, Id = new Lazy<int>(() => allowedContentTypeId) });
-                        }
-
-                        // Add children defined via "AllowedChildNodeTypesOf" property (Retrieved from method "GetAllowableParents")
-                        if (additionalAllowableTypes != null)
-                        {
-                            foreach (ContentTypeSort item in additionalAllowableTypes)
-                            {
-                                int childId = item.Id.Value;
-                                if (!allowedTypeIds.Any(s => s.Id.Value == childId))
+                                // add to the list of allowed child node types of
+                                // the parent node if it isn't already there.
+                                if (!allowedChildNodeTypes.Contains(docTypeNode.Id))
                                 {
-                                    allowedTypeIds.Add(new ContentTypeSort { Alias = item.Alias, Id = new Lazy<int>(() => childId) });
+                                    allowedChildNodeTypes.Add(docTypeNode.Id);
+                                    parentDocType.AllowedChildContentTypeIDs = 
+                                        allowedChildNodeTypes.ToArray();
+
+                                    parentDocType.Save();
                                 }
-                            } 
+                            }
                         }
-
                     }
-
-                    contentType.AllowedContentTypes = allowedTypeIds.ToArray();
-                    ContentTypeService.Save(contentType);
                 }
-                
-                // IF children are defined only via "AllowedChildNodeTypesOf" property (Retrieved from method "GetAllowableParents")
-                if (additionalAllowableTypes != null && additionalAllowableTypes.Count > 0)
-                {
-                    foreach (ContentTypeSort item in additionalAllowableTypes)
+            }
+        }
+        #endregion
+
+        public List<string> CleanDocumentTypes(Type uSiteBuilderType)
+        {
+            List<string> aliases = new List<string>();
+            List<Type> firstLevelSubTypes = Util.GetFirstLevelSubTypes(uSiteBuilderType);
+
+            foreach (Type typeDocType in firstLevelSubTypes)
+            {
+                string alias = GetDocumentTypeAlias(typeDocType);
+
+                IEnumerable<PropertyInfo> alluSiteBuilderProperties = typeDocType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic |
+                                   BindingFlags.Instance).Where(prop => Util.GetAttribute<DocumentTypePropertyAttribute>(prop) != null);
+
+                List<string> propertyAliases = alluSiteBuilderProperties.Select(prop =>
                     {
-                        int childId = item.Id.Value;
-                        if (!allowedTypeIds.Any(s => s.Id.Value == childId))
+                        string propertyName;
+                        string propertyAlias;
+                        ReadPropertyNameAndAlias(prop, Util.GetAttribute<DocumentTypePropertyAttribute>(prop), out propertyName, out propertyAlias);
+                        return propertyAlias;
+                    }).ToList();
+
+                // add mixin properties
+                var documentTypeAttribute = GetDocumentTypeAttribute(typeDocType);
+
+                if (documentTypeAttribute.Mixins != null)
+                {
+                    foreach (Type mixinType in documentTypeAttribute.Mixins)
+                    {
+                        foreach (var mixinProperty in mixinType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic |
+                                   BindingFlags.Instance).Where(prop => Util.GetAttribute<DocumentTypePropertyAttribute>(prop) != null))
                         {
-                            allowedTypeIds.Add(new ContentTypeSort { Alias = item.Alias, Id = new Lazy<int>(() => childId) });
+                            string propertyName;
+                            string propertyAlias;
+                            ReadPropertyNameAndAlias(mixinProperty, Util.GetAttribute<DocumentTypePropertyAttribute>(mixinProperty), out propertyName, out propertyAlias);
+                            if (!propertyAliases.Contains(propertyAlias))
+                            {
+                                propertyAliases.Add(propertyAlias);
+                            }
                         }
                     }
                 }
-
-                // Update only in case there are allowed type ID's or if the allowed type ID's are cleared for the document type.
-                if (allowedTypeIds.Count > 0 || (contentType.AllowedContentTypes.Count() > 0 && allowedTypeIds.Count == 0))
+                DocumentType docType = DocumentType.GetByAlias(alias);
+                if (docType != null)
                 {
-                    contentType.AllowedContentTypes = allowedTypeIds.ToArray();
-                    ContentTypeService.Save(contentType);
-                }
-            }
-        }
-
-        private static bool IsViewForDocumentType(string typeName, string templateCode)
-        {
-            bool retVal = false;
-            var match = Regex.Match(templateCode, @"UmbracoTemplatePageBase\s*\<\s*(.*)\s*\>");
-            if (match.Success)
-            {
-                string templateTypeName = match.Groups[1].Value;
-                string[] nameSplitArray = templateTypeName.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-                if (nameSplitArray.Length > 0)
-                {
-                    templateTypeName = nameSplitArray.Last();
-                    if (!string.IsNullOrEmpty(templateTypeName) && templateTypeName == typeName)
+                    foreach(var property in docType.PropertyTypes.Where(prop => prop.ContentTypeId == docType.Id))
+                        
+                    if (!propertyAliases.Any(prop => prop ==  property.Alias))
                     {
-                        retVal = true;
+                        property.delete();
                     }
                 }
+
+                aliases.Add(alias);
+                aliases.AddRange(CleanDocumentTypes(typeDocType));
             }
 
-            return retVal;
+            return aliases;
         }
 
-        public static void DeleteDocumentType(string alias)
+        public void CleanUpDocumentTypes()
         {
-            var contentType = ContentTypeService.GetContentType(alias);
-            ContentTypeService.Delete(contentType);
-        }
+            var aliases = CleanDocumentTypes(typeof(DocumentTypeBase));
 
-        public static void CleanUpDocumentTypes()
-        {
-            List<string> existingDocumentTypesAliases = new List<string>();
-            List<Type> existingDocumentTypes = Util.GetAllSubTypes(typeof(DocumentTypeBase));
+            // delete any umbraco defined doc types that don't exist in the class definitions
+            var docTypesToDelete = DocumentType.GetAllAsList().Where(doctype => aliases.All(alias => alias != doctype.Alias));
 
-            foreach (var item in existingDocumentTypes)
-            {
-                existingDocumentTypesAliases.Add(GetDocumentTypeAlias(item));                
-            }
-
-            // get all umbraco defined doc types that don't exist in the class definitions
-            var docTypesToDelete = ContentTypeService.GetAllContentTypes().Where(contentType => existingDocumentTypesAliases.All(alias => alias != contentType.Alias));
-
-            foreach (var docTypeToDelete in docTypesToDelete.OrderByDescending(dt => dt.Level))
+            foreach (var docTypeToDelete in docTypesToDelete)
             {
                 DeleteDocumentType(docTypeToDelete.Alias);
             }

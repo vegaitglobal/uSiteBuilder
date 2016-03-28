@@ -1,6 +1,9 @@
 ﻿namespace Vega.USiteBuilder.Configuration
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
     using System.Configuration;
 
     /// <summary>
@@ -8,25 +11,23 @@
     /// </summary>
     static class USiteBuilderConfiguration
     {
-        private static bool? _isSuppressed = null;
-
         /// <summary>
-        /// Get setting whether we should enable Umbraco MVC default controller
+        /// Get's username of umbraco user whose account is used with Umbraco API
         /// </summary>
-        public static bool EnableDefaultControllerType
+        public static string ApiUser 
         {
             get
             {
-                bool retVal;
-                if (!Boolean.TryParse(ConfigurationManager.AppSettings["siteBuilderEnableDefaultControllerType"], out retVal))
+                string retVal = ConfigurationManager.AppSettings["siteBuilderUserLoginName"];
+
+                if (String.IsNullOrEmpty(retVal))
                 {
-                    retVal = true;
+                    retVal = "admin";
                 }
 
                 return retVal;
             }
         }
-
 
         /// <summary>
         /// Get's username of umbraco user whose account is used with Umbraco API
@@ -35,20 +36,19 @@
         {
             get
             {
-                if (!_isSuppressed.HasValue)
+                bool retVal = false;
+                
+                string isSuppressed = 
+                    ConfigurationManager.AppSettings["siteBuilderSuppressSynchronization"]
+                    // this value is kept here to maintain backwards compatibility
+                    ?? ConfigurationManager.AppSettings["siteBuilderSupressSynchronization"]; 
+
+                if (!string.IsNullOrEmpty(isSuppressed))
                 {
-                    string value = ConfigurationManager.AppSettings["siteBuilderSuppressSynchronization"];
-                    bool retVal = false;
-
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        Boolean.TryParse(value, out retVal);
-                    }
-
-                    _isSuppressed = retVal;
+                    retVal = Convert.ToBoolean(isSuppressed);
                 }
 
-                return _isSuppressed.Value;
+                return retVal;
             }
         }
 
@@ -66,8 +66,12 @@
                 {
                     retVal = "";
                 }
+
                 return retVal;
             }
         }
+    
+    
+    
     }
 }

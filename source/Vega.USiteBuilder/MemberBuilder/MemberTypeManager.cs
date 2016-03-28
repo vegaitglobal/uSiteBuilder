@@ -1,8 +1,4 @@
-﻿using Umbraco.Core;
-using Umbraco.Core.Models;
-using Umbraco.Core.Services;
-
-namespace Vega.USiteBuilder
+﻿namespace Vega.USiteBuilder
 {
     using System;
     using System.Collections.Generic;
@@ -10,7 +6,9 @@ namespace Vega.USiteBuilder
     using System.Reflection;
 
     using umbraco.cms.businesslogic;
+    using umbraco.cms.businesslogic.datatype;
     using umbraco.cms.businesslogic.member;
+    using umbraco.cms.businesslogic.propertytype;
 
     /// <summary>
     /// Manages member type synchronization
@@ -20,7 +18,6 @@ namespace Vega.USiteBuilder
         // Holds all members types found in 
         // Type = Member type type (subclass of MemberTypeBase), string = member type alias
         private static Dictionary<string, Type> _memberTypes = new Dictionary<string, Type>();
-        static readonly IContentTypeService ContentTypeService = ApplicationContext.Current.Services.ContentTypeService;
 
         // indicates if any of synced member types had a default value
         private bool _hadDefaultValues = false;
@@ -43,7 +40,8 @@ namespace Vega.USiteBuilder
             if (this._hadDefaultValues) // if there were default values set subscribe to News event in which we'll set default values.
             {
                 // subscribe to New event
-                Member.New += Member_New;
+                //Member.AfterNew += new Member.NewEventHandler(this.Member_New);
+                Member.New += new Member.NewEventHandler(this.Member_New);
             }
         }
 
@@ -67,7 +65,7 @@ namespace Vega.USiteBuilder
                     try
                     {
                         umbraco.cms.businesslogic.property.Property property = member.getProperty(propertyAlias);
-                        property.Value = Convert.ChangeType(propAttr.DefaultValue, propInfo.PropertyType);
+                        property.Value = propAttr.DefaultValue;
                     }
                     catch (Exception exc)
                     {
@@ -112,7 +110,7 @@ namespace Vega.USiteBuilder
                     alias += "_";
                 }
             }
-        }        
+        }
 
         public static MemberType GetMemberType(Type typeMemberType)
         {
@@ -121,30 +119,14 @@ namespace Vega.USiteBuilder
 
         public static Type GetMemberTypeType(string memberTypeAlias)
         {
-            if (!HasSynchronizedMemberTypes())
-            {
-                FillMemberTypes(typeof(MemberTypeBase));
-            }
-
             Type retVal = null;
+
             if (MemberTypeManager._memberTypes.ContainsKey(memberTypeAlias))
             {
                 retVal = MemberTypeManager._memberTypes[memberTypeAlias];
             }
 
             return retVal;
-        }
-
-        private static void FillMemberTypes(Type baseMemberType)
-        {
-            foreach (Type typeDocType in Util.GetFirstLevelSubTypes(baseMemberType))
-            {
-                string memberTypeAlias = GetMemberTypeAlias(typeDocType);
-                _memberTypes.Add(memberTypeAlias, typeDocType);
-
-                // create all children document types
-                FillMemberTypes(typeDocType);
-            }
         }
         #endregion
 
@@ -174,23 +156,29 @@ namespace Vega.USiteBuilder
                     memberTypeAlias, typeMemberType.FullName, typeMemberType.Assembly.FullName, exc.Message));
             }
 
-
-            _memberTypes.Add(memberTypeAlias, typeMemberType);
-            
-            MemberType memberType = MemberType.GetByAlias(memberTypeAlias);
-            if (memberType == null)
+            if (!Configuration.USiteBuilderConfiguration.SuppressSynchronization)
             {
-                memberType = MemberType.MakeNew(new umbraco.BusinessLogic.User(0), memberTypeAttr.Name);
+                MemberTypeManager._memberTypes.Add(memberTypeAlias, typeMemberType);
+
+                MemberType memberType = MemberType.GetByAlias(memberTypeAlias);
+                if (memberType == null)
+                {
+                    // if name is not set, use name of the type
+                    memberType = MemberType.MakeNew(this.siteBuilderUser, memberTypeName);
+                }
+
+                memberType.Text = memberTypeName;
+                memberType.Alias = memberTypeAlias;
+                memberType.IconUrl = memberTypeAttr.IconUrl;
+                memberType.Thumbnail = memberTypeAttr.Thumbnail;
+                memberType.Description = memberTypeAttr.Description;
+
+                memberType.MasterContentType = 0;
+
+                this.SynchronizeMemberTypeProperties(typeMemberType, memberType);
+
+                memberType.Save();
             }
-
-            memberType.Alias = memberTypeAlias;
-            memberType.IconUrl = memberTypeAttr.IconUrl;
-            memberType.Thumbnail = memberTypeAttr.Thumbnail;
-            memberType.Description = memberTypeAttr.Description;
-
-            SynchronizeMemberTypeProperties(typeMemberType, memberType);
-
-            memberType.Save();
         }
 
         /// <summary>
@@ -225,69 +213,7 @@ namespace Vega.USiteBuilder
         #region [Member type properties synchronization]
         private void SynchronizeMemberTypeProperties(Type typeMemberType, MemberType memberType)
         {
-            int propertySortOrder = 0;
-            foreach (PropertyInfo propInfo in typeMemberType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
-                if (propAttr == null)
-                {
-                    continue; // skip this property - not part of a document type
-                }
-
-                // getting name and alias
-                string propertyName;
-                string propertyAlias;
-                DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
-
-                if (HasObsoleteAttribute(propInfo))
-                {
-                    Util.DeletePropertyType(memberType, propertyAlias);
-                    continue;
-                }
-
-                if (propAttr.DefaultValue != null)
-                {
-                    _hadDefaultValues = true; // at least one property has a default value
-                }
-
-
-                umbraco.cms.businesslogic.datatype.DataTypeDefinition dataTypeDefinition = GetDataTypeDefinition(typeMemberType, propAttr, propInfo);
-
-                // getting property if already exists, or creating new if it not exists
-                umbraco.cms.businesslogic.propertytype.PropertyType propertyType = memberType.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
-                if (propertyType == null) // if not exists, create it
-                {
-                    memberType.AddPropertyType(dataTypeDefinition, propertyAlias, propertyName);
-                    propertyType = memberType.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
-                }
-
-                //// Setting up the tab of this property. If tab doesn't exists, create it.
-                if (!string.IsNullOrEmpty(propAttr.TabAsString) && propAttr.TabAsString.ToLower() != DocumentTypeDefaultValues.TabGenericProperties.ToLower())
-                {
-                    // try to find this tab
-                    umbraco.cms.businesslogic.propertytype.PropertyTypeGroup pg = memberType.PropertyTypeGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
-                    if (pg == null) // if found
-                    {
-                        memberType.AddVirtualTab(propAttr.TabAsString);
-                        pg = memberType.PropertyTypeGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
-                    }
-
-                    if (propAttr.TabOrder.HasValue)
-                    {
-                        pg.SortOrder = propAttr.TabOrder.Value;
-                    }
-
-                    propertyType.PropertyTypeGroup = pg.Id;
-                }
-
-                propertyType.Name = propertyName;
-                propertyType.Mandatory = propAttr.Mandatory;
-                propertyType.ValidationRegExp = propAttr.ValidationRegExp;
-                propertyType.Description = propAttr.Description;
-                propertyType.SortOrder = propertySortOrder;
-
-                propertySortOrder++;
-            }
+            this.SynchronizeContentTypeProperties(typeMemberType, memberType, out this._hadDefaultValues);            
         }
         #endregion
     }

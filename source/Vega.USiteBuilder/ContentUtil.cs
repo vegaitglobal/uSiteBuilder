@@ -17,6 +17,7 @@
     using umbraco.cms.businesslogic.property;
 
     /// <summary>
+    /// NOT USED YET
     /// </summary>
     internal class ContentUtil
     {

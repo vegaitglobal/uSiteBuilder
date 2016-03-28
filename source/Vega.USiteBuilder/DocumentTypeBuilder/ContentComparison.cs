@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Vega.USiteBuilder
 {
@@ -7,6 +7,5 @@ namespace Vega.USiteBuilder
         public string Alias { get; set; }
         public Status DocumentTypeStatus { get; set; }
         public string ParentAlias { get; set; }
-        public int DocumentTypeId { get; set; }
     }
 }

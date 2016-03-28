@@ -1,6 +1,9 @@
 ﻿namespace Vega.USiteBuilder
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
 
     /// <summary>
     /// Allows setting document type tab name with spaces

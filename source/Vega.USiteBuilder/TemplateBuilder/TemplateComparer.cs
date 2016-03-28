@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using umbraco.IO;
 using umbraco.cms.businesslogic.template;
-using Umbraco.Core.IO;
 
 namespace Vega.USiteBuilder.TemplateBuilder
 {
@@ -16,7 +16,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
             {
                 return PreviewTemplates(typeof(TemplateBase));
             }
-
+        
             return PreviewViews();
         }
 
@@ -37,16 +37,16 @@ namespace Vega.USiteBuilder.TemplateBuilder
                     Template template = Template.GetByAlias(alias);
                     if (template == null)
                     {
-
+                       
                         string parentAlias = TemplateManager.GetViewParent(File.ReadAllText(path));
 
 
                         templateComparison.Add(new ContentComparison
-                        {
-                            Alias = alias,
-                            DocumentTypeStatus = Status.New,
-                            ParentAlias = parentAlias ?? "default"
-                        });
+                                                   {
+                                                       Alias = alias,
+                                                       DocumentTypeStatus = Status.New,
+                                                       ParentAlias = parentAlias ?? "default"
+                                                   });
                     }
                     else
                     {
@@ -68,20 +68,20 @@ namespace Vega.USiteBuilder.TemplateBuilder
                         if (template.MasterTemplate != parentTemplateId)
                         {
                             templateComparison.Add(new ContentComparison
-                            {
-                                Alias = alias,
-                                DocumentTypeStatus = Status.Changed,
-                                ParentAlias = parentMasterPageName ?? "default"
-                            });
+                                                       {
+                                                           Alias = alias,
+                                                           DocumentTypeStatus = Status.Changed,
+                                                           ParentAlias = parentMasterPageName ?? "default"
+                                                       });
                         }
                         else
                         {
                             templateComparison.Add(new ContentComparison
-                            {
-                                Alias = alias,
-                                DocumentTypeStatus = Status.Same,
-                                ParentAlias = parentMasterPageName ?? "default"
-                            });
+                                                       {
+                                                           Alias = alias,
+                                                           DocumentTypeStatus = Status.Same,
+                                                           ParentAlias = parentMasterPageName ?? "default"
+                                                       });
                         }
                     }
                 }
@@ -102,7 +102,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
                     templateComparison.AddRange(PreviewTemplates(typeTemplate));
                     continue;
                 }
-
+                
                 string alias = TemplateManager.GetTemplateAlias(typeTemplate);
                 Template template = Template.GetByAlias(alias);
                 if (template == null)
@@ -115,11 +115,11 @@ namespace Vega.USiteBuilder.TemplateBuilder
                         string parentAlias = templateManager.GetParentMasterPageName(File.ReadAllText(path));
 
                         templateComparison.Add(new ContentComparison
-                        {
-                            Alias = alias,
-                            DocumentTypeStatus = Status.New,
-                            ParentAlias = parentAlias ?? ""
-                        });
+                                                   {
+                                                       Alias = alias,
+                                                       DocumentTypeStatus = Status.New,
+                                                       ParentAlias = parentAlias ?? ""
+                                                   });
                     }
                 }
                 else

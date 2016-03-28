@@ -1,3 +1,0 @@
-﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="SecondLevel1.master.cs" Inherits="Vega.Test.Web.Masterpages.SecondLevel1" MasterPageFile="~/masterpages/FirstLevel.master" %>
-
-<p>Second Level 1</p>

@@ -1,6 +1,0 @@
-﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="FirstLevel.master.cs" Inherits="Vega.Test.Web.Masterpages.FirstLevel" MasterPageFile="~/umbraco/masterpages/default.master" %>
-
-
-<asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolderDefault" runat="server">
-    
-</asp:Content>

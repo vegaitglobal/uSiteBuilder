@@ -68,22 +68,25 @@
                     macroAlias, typeUserControl.FullName, typeUserControl.Assembly.FullName, exc.Message));
             }
 
-            Macro macro = Macro.GetByAlias(macroAlias);
-            if (macro == null || macro.Id == 0) // Check id=0 because there is a bug in umbraco that returns Macro object even if there's no macro with given alias in the database.
+            if (!Configuration.USiteBuilderConfiguration.SuppressSynchronization)
             {
-                macro = Macro.MakeNew(macroName);
+                Macro macro = new Macro(macroAlias);
+                if (macro == null || macro.Id == 0) // Check id=0 because there is a bug in umbraco that returns Macro object even if there's no macro with given alias in the database.
+                {
+                    macro = Macro.MakeNew(macroName);
+                }
+
+                macro.Alias = macroAlias;
+                macro.Name = macroName;
+                macro.Type = string.Format("/{0}/{1}.ascx", Constants.UserControlsDirectory, typeUserControl.Name);
+                macro.UseInEditor = macroAttr.UseInEditor;
+                macro.RenderContent = macroAttr.RenderContentInEditor;
+                macro.RefreshRate = macroAttr.CachePeriod;
+                macro.CacheByPage = macroAttr.CacheByPage;
+                macro.CachePersonalized = macroAttr.CachePersonalized;
+
+                this.SynchronizeMacroProperties(typeUserControl, macro);
             }
-
-            macro.Alias = macroAlias;
-            macro.Name = macroName;
-            macro.Type = string.Format("/{0}/{1}.ascx", Constants.UserControlsDirectory, typeUserControl.Name);
-            macro.UseInEditor = macroAttr.UseInEditor;
-            macro.RenderContent = macroAttr.RenderContentInEditor;
-            macro.RefreshRate = macroAttr.CachePeriod;
-            macro.CacheByPage = macroAttr.CacheByPage;
-            macro.CachePersonalized = macroAttr.CachePersonalized;
-
-            this.SynchronizeMacroProperties(typeUserControl, macro);
         }
 
         private void SynchronizeMacroProperties(Type typeUserControl, Macro macro)

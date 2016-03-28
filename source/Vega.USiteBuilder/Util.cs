@@ -1,24 +1,26 @@
 ﻿using System.Web;
+using System.Web.Caching;
 using System.Xml;
 using Umbraco.Core;
-using Umbraco.Core.Models;
-using Umbraco.Core.Services;
+using Umbraco.Core.Configuration;
+using Umbraco.Core.Logging;
 
 namespace Vega.USiteBuilder
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
     using System.Linq;
+    using System.Collections.Generic;
     using System.Reflection;
-    using System.Text;
     using System.Xml.XPath;
+
     using umbraco.BusinessLogic;
+    using umbraco.cms.businesslogic;
     using umbraco.cms.businesslogic.datatype;
-    using umbraco.cms.businesslogic.member;
     using umbraco.cms.businesslogic.propertytype;
+
     using Vega.USiteBuilder.Configuration;
+    using System.IO;
+    using System.Text;
 
     /// <summary>
     /// Contains various utility methods
@@ -26,28 +28,20 @@ namespace Vega.USiteBuilder
     internal static class Util
     {
         private static Version UmbracoVersion { get; set; }
-        private static List<Type> _types = null;
-        static readonly IDataTypeService DataTypeService = ApplicationContext.Current.Services.DataTypeService;
 
-        private static List<Type> Types
+        /// <summary>
+        /// Gets all first level subtypes (directly inherited types) of type given as argument. 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static List<Type> GetFirstLevelSubTypes(Type type)
         {
-            get
-            {
-                if (_types == null)
-                {
-                    _types = new List<Type>();
-                    LoadTypes();
-                }
+            List<Type> retVal = new List<Type>();
 
-                return _types;
-            }
-        }
+            Assembly[] assemblies = GetSiteBuilderAssemblies();
 
-        static readonly IContentTypeService ContentTypeService = ApplicationContext.Current.Services.ContentTypeService;
-
-        private static void LoadTypes()
-        {
-            foreach (Assembly assembly in GetSiteBuilderAssemblies())
+            // NOTE: The similar functionality is located in the method bellow
+            foreach (Assembly assembly in assemblies)
             {
                 Module[] modules = assembly.GetLoadedModules();
 
@@ -57,50 +51,20 @@ namespace Vega.USiteBuilder
                     try
                     {
                         types = module.GetTypes();
-                        _types.AddRange(types);
+                        foreach (Type t in types)
+                        {
+                            if (t.BaseType != null && (t.BaseType.Equals(type) ||
+                                (type.IsGenericType && type.Name == t.BaseType.Name)) ||
+                                t.GetInterfaces().FirstOrDefault(i => i == type) != null)
+                            {
+                                retVal.Add(t);
+                            }
+                        }
                     }
-                    catch
-                    {
-                        //TODO: add logging/exception handling
-                    } // required because Exception is thrown for some dlls when .GetTypes method is called
+                    catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
                 }
             }
-        }
 
-        /// <summary>
-        /// Gets all first level subtypes (directly inherited types) of type given as argument. 
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static List<Type> GetFirstLevelSubTypes(Type type)
-        {
-#if DEBUG
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-#endif
-
-            List<Type> retVal = new List<Type>();
-
-            // NOTE: The similar functionality is located in the method bellow
-            try
-            {
-                foreach (Type t in Types)
-                {
-                    if (t.BaseType != null && (t.BaseType.Equals(type) ||
-                        (type.IsGenericType && type.Name == t.BaseType.Name)) ||
-                        t.GetInterfaces().FirstOrDefault(i => i == type) != null)
-                    {
-                        retVal.Add(t);
-                    }
-                }
-            }
-            catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
-
-#if DEBUG
-            timer.Stop();
-            //StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'GetFirstLevelSubTypes': {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
             return retVal;
         }
 
@@ -109,34 +73,37 @@ namespace Vega.USiteBuilder
         /// </summary>
         public static List<Type> GetAllSubTypes(Type type)
         {
-#if DEBUG
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-#endif
             List<Type> retVal = new List<Type>();
 
+            Assembly[] assemblies = GetSiteBuilderAssemblies();
+
             // NOTE: The similar functionality is located in the method above
-            try
+            foreach (Assembly assembly in assemblies)
             {
-                foreach (Type t in Types)
+                Module[] modules = assembly.GetLoadedModules();
+
+                foreach (Module module in modules)
                 {
-                    if (t.BaseType != null && t.IsSubclassOf(type))
+                    try
                     {
-                        retVal.Add(t);
+                        Type[] types = null;
+                        types = module.GetTypes();
+                        foreach (Type t in types)
+                        {
+                            if (t.BaseType != null && t.IsSubclassOf(type))
+                            {
+                                retVal.Add(t);
+                            }
+                        }
                     }
+                    catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
                 }
             }
-            catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
 
-#if DEBUG
-            timer.Stop();
-            //StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'GetAllSubTypes': {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
             return retVal;
         }
 
-        private static IEnumerable<Assembly> GetSiteBuilderAssemblies()
+        private static Assembly[] GetSiteBuilderAssemblies()
         {
             if (USiteBuilderConfiguration.Assemblies != "")
             {
@@ -152,39 +119,28 @@ namespace Vega.USiteBuilder
 
                 result.Add(Assembly.GetExecutingAssembly());
 
-                return result;
+                return result.ToArray();
             }
             else
-            {
-                // Enforcing loading of assemblies from bin folder because they are not all loaded when uSiteBuilder needs them.
-                LoadAssembliesFromBinFolder();
-
                 return AppDomain.CurrentDomain.GetAssemblies();
-            }
         }
 
-        private static void LoadAssembliesFromBinFolder()
+
+        /// <summary>
+        /// Returns login name of Umbraco user used by USiteBuilder (for creating document types, templates etc...)
+        /// </summary>
+        public static User GetSiteBuilderUmbracoUser()
         {
-            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
-            List<string> loadedPaths = new List<string>();
-            foreach (Assembly assembly in loadedAssemblies)
+            // user admin user
+            User[] users = User.getAllByLoginName(USiteBuilderConfiguration.ApiUser);
+
+            if (users.Length != 1)
             {
-                try
-                {
-                    if (!string.IsNullOrEmpty(assembly.Location))
-                    {
-                        loadedPaths.Add(assembly.Location);
-                    }
-                }
-                catch
-                {
-                    // Do nothing, just catch the not supported exception and continue.
-                }
+                throw new Exception(string.Format("Umbraco user used by USiteBuilder ('{0}') is not found in Umbraco. Please check your web.config (Add <add key=\"siteBuilderUserLoginName\" value=\"someumbracoadminusername\" /> to <appSettings> in web.config).",
+                    USiteBuilderConfiguration.ApiUser));
             }
 
-            var referencedPaths = Directory.GetFiles(Path.Combine(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin")), "*.dll");
-            var toLoad = referencedPaths.Where(r => !loadedPaths.Contains(r, StringComparer.InvariantCultureIgnoreCase)).ToList();
-            toLoad.ForEach(path => AppDomain.CurrentDomain.Load(AssemblyName.GetAssemblyName(path)));
+            return users[0];
         }
 
         /// <summary>
@@ -266,20 +222,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static User GetAdminUser()
         {
-            try
-            {
-                User adminUser = User.GetUser(0);
-                if (adminUser == null)
-                {
-                    adminUser = User.getAll().FirstOrDefault(u=>u.IsAdmin());
-                }
-
-                return adminUser;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return User.GetUser(0);
         }
 
         /// <summary>
@@ -313,34 +256,15 @@ namespace Vega.USiteBuilder
         /// <param name="dt">The dt.</param>
         /// <param name="alias">The alias.</param>
         /// <param name="name">The name.</param>
-        /// <param name="tabName">Name of the tab.</param>
-        public static void AddPropertyType(IContentTypeBase contentType, DataTypeDefinition dt, string alias, string name, string tabName)
+        public static void AddPropertyType(ContentType contentType, DataTypeDefinition dt, string alias, string name)
         {
-            IDataTypeDefinition idt = DataTypeService.GetDataTypeDefinitionById(dt.Id);
-            Umbraco.Core.Models.PropertyType pt = new Umbraco.Core.Models.PropertyType(idt)
-            {
-                Alias = alias,
-                Name = name
-            };
-
-            if (String.IsNullOrEmpty(tabName))
-            {
-                contentType.AddPropertyType(pt);
-            }
-            else
-            {
-                contentType.AddPropertyType(pt, tabName);
-            }
+            typeof(ContentType).GetMethod("AddPropertyType").Invoke(contentType, new object[] { dt, alias, name });
         }
 
-        public static void DeletePropertyType(IContentType contentType, string alias)
+        public static void DeletePropertyType(ContentType contentType, string alias)
         {
-            contentType.RemovePropertyType(alias);
-        }
+            PropertyType propertyType = contentType.PropertyTypes.SingleOrDefault(pt => pt.Alias == alias);
 
-        public static void DeletePropertyType(MemberType memberType, string alias)
-        {
-            PropertyType propertyType = memberType.PropertyTypes.FirstOrDefault(x => x.Alias.Equals(alias, StringComparison.OrdinalIgnoreCase));
             if (propertyType != null)
             {
                 propertyType.delete();
@@ -353,40 +277,32 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static Version GetCurrentUmbracoVersion()
         {
-            if (UmbracoVersion == null)
-            {                
-                UmbracoVersion = typeof(umbraco.content).Assembly.GetName().Version;
+            if (Util.UmbracoVersion == null)
+            {
+                //Util.UmbracoVersion = Assembly.LoadFrom("umbraco.dll").GetName().Version;
+                Util.UmbracoVersion = typeof(umbraco.content).Assembly.GetName().Version;
             }
 
-            return UmbracoVersion;
+            return Util.UmbracoVersion;
         }
 
 
         /// <summary>
-        /// Determines whether current instance of Umbraco is of version 6.0.6 or higher
+        /// Determines whether current instance of Umbraco is of version 4.7 or higher
         /// </summary>
         /// <returns>
-        /// 	<c>true</c> if current Umbraco instance is v6.0.6 or higher; otherwise, <c>false</c>.
+        /// 	<c>true</c> if current Umbraco instance is v4.7 or higher; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsUmbraco606OrHigher()
+        public static bool IsUmbraco47orHigher()
         {
-            return GetCurrentUmbracoVersion() >= new Version(1, 0, 4898, 0);
-        }
+            bool retVal = false;
 
-        public static bool IsUmbraco700OrHigher()
-        {
-            return GetCurrentUmbracoVersion() >= new Version(1, 0, 5073, 23298);
-        }
+            if (Util.GetCurrentUmbracoVersion() >= new Version(1, 0, 4077, 0))
+            {
+                retVal = true;
+            }
 
-        /// <summary>
-        /// Determines whether current instance of Umbraco is of version 6.1.6 or higher
-        /// </summary>
-        /// <returns>
-        /// 	<c>true</c> if current Umbraco instance is v6.1.6 or higher; otherwise, <c>false</c>.
-        /// </returns>
-        public static bool IsUmbraco616OrHigher()
-        {
-            return GetCurrentUmbracoVersion() >= new Version(1, 0, 5021, 24868);
+            return retVal;
         }
 
         /// <summary>
@@ -399,7 +315,7 @@ namespace Vega.USiteBuilder
         {
             string retVal = null;
 
-            var serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(obj.GetType());
+            System.Runtime.Serialization.Json.DataContractJsonSerializer serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(obj.GetType());
             using (MemoryStream ms = new MemoryStream())
             {
                 serializer.WriteObject(ms, obj);
@@ -450,21 +366,8 @@ namespace Vega.USiteBuilder
                     {
                         var value = node.FirstChild.Value;
                         if (value != null)
-                        {                            
-                            if (value == "WebForms")
-                            {
-                                engine = RenderingEngine.WebForms;
-                            }
-                            else if (value == "Mvc")
-                            {
-                                engine = RenderingEngine.Mvc;
-                            }
-                            else
-                            {
-                                engine = RenderingEngine.Unknown;
-                            }
-
-                            //Enum.TryParse(value, true, out engine);
+                        {
+                            Enum.TryParse(value, true, out engine);
                         }
                     }
 

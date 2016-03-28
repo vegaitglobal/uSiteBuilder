@@ -1,7 +1,7 @@
 ﻿namespace Vega.USiteBuilder
 {
     using System.Web;
-    using umbraco.NodeFactory;
+    using umbraco.presentation.nodeFactory;
 
     //using umbraco.NodeFactory;
 
@@ -31,7 +31,7 @@
             {
                 if (!this._contentNodeId.HasValue)
                 {
-                    this._contentNodeId = Node.getCurrentNodeId();
+                    this._contentNodeId = Node.GetCurrent().Id;
                 }
 
                 return (int)this._contentNodeId;

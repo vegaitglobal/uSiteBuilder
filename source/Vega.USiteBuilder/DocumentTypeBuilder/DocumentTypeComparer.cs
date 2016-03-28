@@ -1,108 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Umbraco.Core;
-using Umbraco.Core.Models;
-using Umbraco.Core.Services;
+using umbraco.cms.businesslogic;
+using umbraco.cms.businesslogic.datatype;
+using umbraco.cms.businesslogic.propertytype;
+using umbraco.cms.businesslogic.template;
+using umbraco.cms.businesslogic.web;
 
 namespace Vega.USiteBuilder.DocumentTypeBuilder
 {
     internal class DocumentTypeComparer
     {
-        static readonly IContentTypeService ContentTypeService = ApplicationContext.Current.Services.ContentTypeService;
-        static bool _hasDefaultValues = false;
-
-        /// <summary>
-        /// Checks if there were any changes in document types defined in Umbraco/uSiteBuilder/Both.
-        /// Does not check relations between document types (allowed childs and allowable parents)
-        /// </summary>
-        /// <param name="hasDefaultValues"></param>
-        /// <returns></returns>
-        public static List<ContentComparison> PreviewDocumentTypeChanges(out bool hasDefaultValues)
+        public static List<ContentComparison> PreviewDocumentTypeChanges()
         {
-#if DEBUG
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-#endif
             // compare the library based definitions to the Umbraco DB
             var definedDocTypes = PreviewDocTypes(typeof(DocumentTypeBase), "");
 
-#if DEBUG
-            timer.Stop();
-            StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'DocumentTypeComparer.PreviewDocumentTypeChanges' - only PreviewDocTypes: {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
-
-
-
-
-#if DEBUG
-            timer.Start();
-#endif
-            hasDefaultValues = _hasDefaultValues;
             // add any umbraco defined doc types that don't exist in the class definitions
-            definedDocTypes.AddRange(ContentTypeService.GetAllContentTypes()
+            definedDocTypes.AddRange(DocumentType.GetAllAsList()
                                          .Where(doctype => definedDocTypes.All(dd => dd.Alias != doctype.Alias))
-                                         .Select(docType => new ContentComparison { Alias = docType.Alias, DocumentTypeStatus = Status.Deleted, DocumentTypeId = docType.Id }));
-
-#if DEBUG
-            timer.Stop();
-            StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'DocumentTypeComparer.PreviewDocumentTypeChanges' - add any umbraco defined doc types that don't exist in the class definitions: {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
+                                         .Select(docType => new ContentComparison { Alias = docType.Alias, DocumentTypeStatus = Status.Deleted }));
 
             return definedDocTypes;
         }
 
-        private static bool IsUnchanged(Type typeDocType, Type parentDocType, IContentType contentType)
+        private static bool IsUnchanged(Type typeDocType, Type parentDocType, DocumentType docType)
         {
             DocumentTypeAttribute docTypeAttr = DocumentTypeManager.GetDocumentTypeAttribute(typeDocType);
-
-            if (docTypeAttr.Mixins != null)
-            {
-                // update this document type since it depends on others
-                return false;
-            }
 
             string docTypeName = String.IsNullOrEmpty(docTypeAttr.Name) ? typeDocType.Name : docTypeAttr.Name;
             string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeDocType);
 
-
-            if (contentType.Name != docTypeName)
+            if (docType.Text != docTypeName)
             {
                 return false;
             }
 
-            if (contentType.Alias != docTypeAlias)
+            if (docType.Alias != docTypeAlias)
             {
                 return false;
             }
 
-            if (contentType.Icon != docTypeAttr.IconUrl)
+            if (docType.IconUrl != docTypeAttr.IconUrl)
             {
                 return false;
             }
 
-            if (contentType.Thumbnail != docTypeAttr.Thumbnail)
+            if (docType.Thumbnail != docTypeAttr.Thumbnail)
             {
                 return false;
             }
 
-            if (contentType.Description != docTypeAttr.Description)
+            if (docType.Description != docTypeAttr.Description)
             {
                 return false;
             }
 
-            if (contentType.ParentId != -1)
+            if (docType.MasterContentType != 0)
             {
                 if (parentDocType == typeof(DocumentTypeBase))
                 {
                     return false;
                 }
 
-                var existingParentDocumentType = ContentTypeService.GetContentType(contentType.ParentId);
+                var existingParentDocumentType = ContentType.GetContentType(docType.MasterContentType);
 
                 if (existingParentDocumentType.Alias != DocumentTypeManager.GetDocumentTypeAlias(parentDocType))
                 {
@@ -117,27 +79,12 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
                 }
             }
 
-#if DEBUG
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-#endif
-            if (!CompareContentTypeProperties(typeDocType, contentType))
+            if (!CompareContentTypeProperties(typeDocType, docType))
             {
                 return false;
             }
 
-#if DEBUG
-            timer.Stop();
-            //StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'DocumentTypeComparer.IsUnchanged' - CompareContentTypeProperties: {0}ms.", timer.ElapsedMilliseconds));
-            timer.Restart();
-#endif
-
-            if (!CompareAllowedTemplates(contentType, docTypeAttr, typeDocType))
-            {
-                return false;
-            }
-
-            if (contentType.AllowedAsRoot != docTypeAttr.AllowAtRoot)
+            if (!CompareAllowedTemplates(docType, docTypeAttr, typeDocType))
             {
                 return false;
             }
@@ -145,18 +92,18 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
             return true;
         }
 
-        private static bool CompareAllowedTemplates(IContentType contentType, DocumentTypeAttribute docTypeAttr, Type typeDocType)
+        private static bool CompareAllowedTemplates(DocumentType docType, DocumentTypeAttribute docTypeAttr, Type typeDocType)
         {
-            List<ITemplate> allowedTemplates = DocumentTypeManager.GetAllowedTemplates(docTypeAttr, typeDocType);
+            List<Template> allowedTemplates = DocumentTypeManager.GetAllowedTemplates(docTypeAttr, typeDocType);
 
-            IEnumerable<ITemplate> existingTemplates = contentType.AllowedTemplates;
+            Template[] existingTemplates = docType.allowedTemplates;
 
             if (allowedTemplates.Count != existingTemplates.Count())
             {
                 return false;
             }
 
-            foreach (var template in allowedTemplates)
+            foreach (Template template in allowedTemplates)
             {
                 if (!existingTemplates.Any(t => t.Alias == template.Alias))
                 {
@@ -164,35 +111,24 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
                 }
             }
 
-            ITemplate defaultTemplate = DocumentTypeManager.GetDefaultTemplate(docTypeAttr, typeDocType, allowedTemplates);
+            //TODO: not sure about the logic here
+            int defaultTemplateId = DocumentTypeManager.GetDefaultTemplate(docTypeAttr, typeDocType, allowedTemplates);
 
-            if (defaultTemplate != null)
+            if (defaultTemplateId != 0)
             {
-                return (contentType.DefaultTemplate.Id == defaultTemplate.Id);
+                return (docType.DefaultTemplate == defaultTemplateId);
             }
 
-            if (allowedTemplates.Count == 1)
+            if (allowedTemplates.Count == 1) 
             {
-                return (contentType.DefaultTemplate.Id == allowedTemplates.First().Id);
+                return (docType.DefaultTemplate == allowedTemplates.First().Id);
             }
-             
+            
             return true;
         }
 
-        private static bool CompareContentTypeProperties(Type uSiteBuilderDocType, IContentType contentType)
+        private static bool CompareContentTypeProperties(Type uSiteBuilderDocType, ContentType contentType)
         {
-            // Retrieve tab names and corresponding properties
-            Dictionary<string, string> tabsWithProperties = new Dictionary<string, string>();
-            string tmpTabName;
-            foreach (var tabItem in contentType.PropertyGroups)
-            {
-                tmpTabName = tabItem.Name;
-                foreach (var propertyItem in tabItem.PropertyTypes)
-                {
-                    tabsWithProperties.Add(propertyItem.Alias, tmpTabName);
-                }
-            }            
-            
             foreach (PropertyInfo propInfo in uSiteBuilderDocType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
@@ -201,52 +137,76 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
                     continue; // skip this property - not part of a document type
                 }
 
-                if (propAttr.DefaultValue != null)
-                {
-                    _hasDefaultValues = true;
-                }
-
                 // getting name and alias
                 string propertyName;
                 string propertyAlias;
                 DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
-
+                
                 if (Util.GetAttribute<ObsoleteAttribute>(propInfo) != null)
                 {
                     // If it's marked as obsolete, but still exists, there's a change
-                    if (contentType.PropertyTypes.Any(p => p.Alias == propertyAlias))
+                    if(contentType.getPropertyType(propertyAlias) != null)
                     {
                         return false;
                     }
-
+                    
                     // marked as obsolete and already deleted, skip rest of checks
                     continue;
-                }                
+                }
 
                 var dataTypeDefinition = ManagerBase.GetDataTypeDefinition(uSiteBuilderDocType, propAttr, propInfo);
-                
-                Umbraco.Core.Models.PropertyType property = contentType.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
-                if (property == null) 
-                {
-                    // new property 
-                    return false;
-                }
 
-                if (property.DataTypeDefinitionId != dataTypeDefinition.Id) 
+                // getting property if already exists, or creating new if it not exists
+                PropertyType property = contentType.getPropertyType(propertyAlias);
+                if (property == null) // if not exists, new
                 {
                     return false;
                 }
 
-                string tabName = string.Empty;
-                tabsWithProperties.TryGetValue(property.Alias, out tabName);
-                if (tabName == null)
-                {
-                    // For generics properties tab
-                    tabName = string.Empty;
-                }
-                if (propAttr.TabAsString != tabName)
+                if (property.DataTypeDefinition.Id != dataTypeDefinition.Id) // if data type definition changed
                 {
                     return false;
+                }
+
+                var tabAsString = propAttr.TabAsString;
+
+                if (string.IsNullOrEmpty(tabAsString))
+                {
+                    tabAsString = Util.GetAttribute<DocumentTypeAttribute>(uSiteBuilderDocType).DefaultTab;
+                }
+
+                if (!String.IsNullOrEmpty(tabAsString))
+                {
+                    if (tabAsString == DocumentTypeDefaultValues.TabGenericProperties)
+                    {
+                        if (property.TabId != 0)
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+
+                        var tab =
+                            contentType.PropertyTypeGroups.FirstOrDefault(
+                                t => t.Name == tabAsString && t.ContentTypeId == contentType.Id);
+                        if (tab == null)
+                        {
+                            return false;
+                        }
+
+                        if (property.PropertyTypeGroup != tab.Id)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (property.TabId != 0)
+                    {
+                        return false;
+                    }
                 }
 
                 if (property.Name != propertyName)
@@ -276,39 +236,28 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
         private static List<ContentComparison> PreviewDocTypes(Type parentDocType, string parentAlias)
         {
             var comparison = new List<ContentComparison>();
+            List<Type> firstLevelSubTypes = Util.GetFirstLevelSubTypes(parentDocType);
 
-            foreach (Type typeDocType in Util.GetFirstLevelSubTypes(parentDocType))
+            foreach (Type typeDocType in firstLevelSubTypes)
             {
                 string alias = DocumentTypeManager.GetDocumentTypeAlias(typeDocType);
 
-                IContentType contentType = ContentTypeService.GetContentType(alias);
-                
-                if (contentType == null)
+                DocumentType docType = DocumentType.GetByAlias(alias);
+                if (docType == null)
                 {
                     comparison.Add(new ContentComparison { Alias = alias, DocumentTypeStatus = Status.New, ParentAlias = parentAlias });
                 }
                 else
                 {
-#if DEBUG
-                    Stopwatch timer = new Stopwatch();
-                    timer.Start();
-#endif
-
-                    bool unchanged = IsUnchanged(typeDocType, parentDocType, contentType);
-
-#if DEBUG
-                    timer.Stop();
-                    //StopwatchLogger.AddToLog(string.Format("Total elapsed time for method 'DocumentTypeComparer.PreviewDocTypes' - IsUnchanged: {0}ms.", timer.ElapsedMilliseconds));
-                    timer.Restart();
-#endif
+                    bool unchanged = IsUnchanged(typeDocType, parentDocType, docType);
 
                     if (unchanged)
                     {
-                        comparison.Add(new ContentComparison { Alias = alias, DocumentTypeStatus = Status.Same, ParentAlias = parentAlias, DocumentTypeId = contentType.Id });
+                        comparison.Add(new ContentComparison { Alias = alias, DocumentTypeStatus = Status.Same, ParentAlias = parentAlias });
                     }
                     else
                     {
-                        comparison.Add(new ContentComparison { Alias = alias, DocumentTypeStatus = Status.Changed, ParentAlias = parentAlias, DocumentTypeId = contentType.Id });
+                        comparison.Add(new ContentComparison { Alias = alias, DocumentTypeStatus = Status.Changed, ParentAlias = parentAlias });
                     }
                 }
 

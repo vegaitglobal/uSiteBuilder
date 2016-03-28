@@ -1,16 +1,17 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("uSiteBuilder")]
-[assembly: AssemblyDescription("Vega IT’s uSitebuilder is an open source (LPGL) framework created for .NET developers to accelerate and streamline their Umbraco based development projects.")]
+[assembly: AssemblyTitle("Vega.USiteBuilder")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Vega IT Sourcing")]
-[assembly: AssemblyProduct("uSiteBuilder")]
-[assembly: AssemblyCopyright("Copyright © Vega IT Sourcing DOO 2016 - All rights reserved")]
-[assembly: AssemblyTrademark("Vega IT Sourcing")]
+[assembly: AssemblyProduct("Vega.USiteBuilder")]
+[assembly: AssemblyCopyright("Copyright © Vega IT Sourcing DOO 2011")]
+[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -19,7 +20,9 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("16bfc390-c609-494a-bad1-28cbe463f4b7")]
+[assembly: Guid("fad805b9-b4cc-4704-a35d-1ff7166a9255")]
+
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Vega.USiteBuilder.Test")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -31,5 +34,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.3.0")]
-[assembly: AssemblyFileVersion("2.0.3.0")]
+[assembly: AssemblyVersion("1.2.5.0")]
+[assembly: AssemblyFileVersion("1.2.5.0")]

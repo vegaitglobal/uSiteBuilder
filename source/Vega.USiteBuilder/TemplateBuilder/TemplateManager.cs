@@ -9,8 +9,6 @@ namespace Vega.USiteBuilder
 {
     internal class TemplateManager : ManagerBase
     {
-        private static List<Template> ExistingTemplates = new List<Template>();
-
         public void Synchronize()
         {
             if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.WebForms)
@@ -18,7 +16,7 @@ namespace Vega.USiteBuilder
                 SynchronizeTemplates(typeof(TemplateBase));
                 UpdateTemplatesTreeStructure();
             }
-            else if (Util.DefaultRenderingEngine == Umbraco.Core.RenderingEngine.Mvc)
+            else
             {
                 SynchronizeViews();
                 UpdateViewsTreeStructure();
@@ -38,11 +36,6 @@ namespace Vega.USiteBuilder
             if (match.Success)
             {
                 parentMasterPageName = match.Groups[1].Value.Replace(".cshtml", "").Replace(".vbhtml", "");
-                string[] pathArray = parentMasterPageName.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-                if (pathArray.Length > 0)
-                {
-                    parentMasterPageName = pathArray[pathArray.Length - 1];
-                }
             }
 
             return parentMasterPageName;
@@ -58,8 +51,7 @@ namespace Vega.USiteBuilder
 
                 if (!string.IsNullOrEmpty(parentMasterPageName) && parentMasterPageName != "default")
                 {
-                    Template parentTemplate = templates.Find(tm => tm.Alias == parentMasterPageName);
-
+                    Template parentTemplate = Template.GetByAlias(parentMasterPageName);
                     if (parentTemplate == null)
                     {
                         throw new Exception(
@@ -68,10 +60,7 @@ namespace Vega.USiteBuilder
                                 template.Alias, parentMasterPageName));
                     }
 
-                    if (template.MasterTemplate != parentTemplate.Id)
-                    {
-                        template.MasterTemplate = parentTemplate.Id;
-                    }
+                    template.MasterTemplate = parentTemplate.Id;
                 }
             }
         }
@@ -97,26 +86,20 @@ namespace Vega.USiteBuilder
 
         private void SynchronizeTemplates(Type typeBaseTemplate)
         {
-            // Get list of all templates from Umbraco
-            ExistingTemplates = Template.GetAllAsList();
-
             foreach (Type typeTemplate in Util.GetFirstLevelSubTypes(typeBaseTemplate))
             {
                 if (!this.IsBaseTemplate(typeTemplate))
                 {
                     this.SynchronizeTemplate(typeTemplate);
                 }
-                else
-                {                    
-                    // recursive call (for generic templates)
-                    this.SynchronizeTemplates(typeTemplate);
-                } 
+
+                // sync all children templates
+                this.SynchronizeTemplates(typeTemplate);
             }
         }
 
         private void SynchronizeTemplate(Type typeTemplate)
         {
-
             string alias = GetTemplateAlias(typeTemplate);
             try
             {
@@ -128,9 +111,10 @@ namespace Vega.USiteBuilder
                     alias, typeTemplate.FullName, typeTemplate.Assembly.FullName, exc.Message));
             }
 
-            if (!ExistingTemplates.Exists(template => template.Alias == alias))
+            Template template = Template.GetByAlias(alias);
+            if (template == null)
             {
-                Template.MakeNew(alias, this.siteBuilderUser);
+                template = Template.MakeNew(alias, this.siteBuilderUser);
             }
         }
 
@@ -151,24 +135,20 @@ namespace Vega.USiteBuilder
 
                 if (!string.IsNullOrEmpty(parentMasterPageName) && parentMasterPageName != "default")
                 {
-                    Template parentTemplate = templates.Find(tm => tm.Alias == parentMasterPageName);
-
+                    Template parentTemplate = Template.GetByAlias(parentMasterPageName);
                     if (parentTemplate == null)
                     {
                         throw new Exception(string.Format("Template '{0}' is using '{1}' as a parent template (defined in MasterPageFile in {0}.master) but '{1}' template cannot be found",
                             template.Alias, parentMasterPageName));
                     }
-                    if (template.MasterTemplate != parentTemplate.Id)
-                    {
-                        template.MasterTemplate = parentTemplate.Id;
-                    }                    
+                    template.MasterTemplate = parentTemplate.Id;
                 }
             }
         }
 
         public string GetParentMasterPageName(Template template)
         {
-            string masterPageContent = File.ReadAllText(template.TemplateFilePath);
+            string masterPageContent = File.ReadAllText(template.MasterPageFile);
             return GetParentMasterPageName(masterPageContent);
         }
 

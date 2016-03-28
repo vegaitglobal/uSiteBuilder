@@ -1,37 +1,14 @@
-﻿using System.Xml.Serialization;
-using System;
-namespace Vega.USiteBuilder.Types
+﻿namespace Vega.USiteBuilder.Types
 {
     /// <summary>
     /// Related link type.
     /// </summary>
     public class RelatedLink : Link
     {
-        int? _relatedNodeId;
-
         /// <summary>
         /// Id of a node if Related link is Internal link or Media link.
         /// </summary>
-        [XmlIgnore]
-        public int? RelatedNodeId {
-            get
-            {
-                if (!_relatedNodeId.HasValue && !string.IsNullOrEmpty(Internal))
-                {
-                    int relatedNodeId;
-                    if (Int32.TryParse(Internal, out relatedNodeId))
-                    {
-                        _relatedNodeId = relatedNodeId;
-                    }
-                }
-
-                return _relatedNodeId;
-            }
-            set
-            {
-                _relatedNodeId = value;
-            }
-        }
+        public int? RelatedNodeId { get; set; }
         
         /// <summary>
         /// Related link type

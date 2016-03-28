@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DocumentTypePropertyTip" xml:space="preserve">
+    <value>/*
+         * Use DocumentTypeProperty attribute to specify which properties will be treated as
+         * a document type properties. Through this attribute you can also set various properties
+         * of a document type (e.g. Description, Mandatory, Tab etc...)
+         */</value>
+  </data>
+  <data name="DocumentTypeTip" xml:space="preserve">
+    <value>/*
+     * Use DocumentType attribute to specify various document type properties as in the 
+     * following example:
+     * 
+     * [DocumentType(DefaultTemplate = typeof(Template1), AllowedChildNodeTypes = new Type[] { typeof(DocumentType1), typeof(DocumentType1)})]
+     * public class ...
+     */</value>
+  </data>
+  <data name="TemplateTip" xml:space="preserve">
+    <value>/*
+     * Wizard created this Template (masterpage) by subclassing Vega.USiteBuilder.TemplateBase.
+     * If you choose strongly typed template, you had to supply DocumentType that
+     * will be related with this masterpage. In that case you can access the current rendered
+     * content based on choosen DocumentType using this.CurrentContent.
+     * 
+     * NOTE: If this template is strongly typed with some document type, this template will be
+     * automatically added to AllowedTemplates list of that document type. If you don't want
+     * such behaviour (adding this template to allowed templates list of this document type)
+     * use Template attribute on this class and set its property AllowedForDocumentType to false
+     * as following:
+     * 
+     * [Template(AllowedForDocumentType = false)]
+     * public partial class ....
+     * 
+     */</value>
+  </data>
+  <data name="WebUserControlTip" xml:space="preserve">
+    <value>/*
+     * Wizard created this control by subclassing Vega.USiteBuilder.WebUserControlBase.
+     * If you choose strongly typed web user control, you had to supply DocumentType that
+     * will be related with this control. You can access the content based on choosen
+     * DocumentType with: this.Content. If you didn't set ContentNodeId property of this control
+     * than the current nodeid is used to get the content into the Content property of this control.
+     * 
+     * If you want to use this control on an Umbraco Template (masterpage) through Macro 
+     * (by using umbraco:Macro tag) than it is possible to automatically create an Macro in
+     * Umbraco website related with this control: add Macro attribute
+     * on this class as following:
+     * 
+     * [Macro]
+     * public partial class WebUserControl1 ...
+     * .....
+     * 
+     * NOTE: Macro attribute has couple of properties which could be used to fine tune Macro 
+     * that will be created for this control (Name, CachePeriod, UseInEditor etc...).
+     * If you don't add Macro attribute to this class, Umbraco Macro will NOT be created. However, you can still
+     * use this control in the Template (masterpage). Just register the control inside
+     * the masterpage (with &lt;%@ Register %&gt; directive) as you would normaly do in ASP.NET Web applications.
+     * 
+     * As mentioned, if Macro attribute is specified on this control, an Macro within Umbraco website will be 
+     * automatically created for this control. Then, for each public property in this control,
+     * an macro parameter will be also automatically added to Macro.
+     * If you want to fine tune Macro parameters which correspond to control's property,
+     * you can do it through MacroParameter attribute as in the following example:
+     * 
+     * [MacroParameter(MacroParameterType.Text, Show=true)]
+     * public string MyProperty { get; set; }
+     * 
+     * SUMMARY: 
+     * By default, Umbraco Macro is not created for this control. If you really want
+     * new Macro in Umbraco related with this control than add Macro attribute on this class.
+     * Using controls directly in masterpages (without Macros) is something that we prefer
+     * and we find it more natural for ASP.NET developers.
+     * 
+     */</value>
+  </data>
+</root>

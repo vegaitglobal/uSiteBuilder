@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using umbraco.cms.businesslogic.datatype;
 
 namespace Vega.USiteBuilder.DataTypeBuilder
@@ -9,11 +10,11 @@ namespace Vega.USiteBuilder.DataTypeBuilder
     {
         public List<ContentComparison> PreviewDataTypeChanges()
         {
-            var comparison = new List<ContentComparison>();
+            List<ContentComparison> comparison = new List<ContentComparison>();
 
             var existingDataTypes = DataTypeDefinition.GetAll();
 
-            List<Type> firstLevelSubTypes = Util.GetFirstLevelSubTypes(typeof(DataTypeBase));
+            List<Type> firstLevelSubTypes = Util.GetFirstLevelSubTypes(typeof (DataTypeBase));
             foreach (Type typeDataType in firstLevelSubTypes)
             {
                 var dataTypeAttr = DataTypeManager.GetDataTypeAttribute(typeDataType);
@@ -53,7 +54,7 @@ namespace Vega.USiteBuilder.DataTypeBuilder
             }
 
             var instance = Activator.CreateInstance(dataType, null) as DataTypeBase;
-            var prevalues = instance.Prevalues;
+            DataTypePrevalue[] prevalues = instance.Prevalues;
 
             var settingsStorage = new DataEditorSettingsStorage();
             var existingSettings = settingsStorage.GetSettings(existingDataType.Id);

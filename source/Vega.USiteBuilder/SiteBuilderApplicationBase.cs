@@ -1,44 +1,18 @@
-﻿using Umbraco.Core;
-using Umbraco.Web.Mvc;
-using Vega.USiteBuilder.Configuration;
-using Vega.USiteBuilder.TemplateBuilder;
-
-namespace Vega.USiteBuilder
+﻿namespace Vega.USiteBuilder
 {
+    using umbraco.BusinessLogic;
+
     /// <summary>
     /// Internal class
     /// </summary>
-    public class SiteBuilderApplicationBase : IApplicationEventHandler
+    public class SiteBuilderApplicationBase : ApplicationBase
     {
         /// <summary>
-        /// Executes after the ApplicationContext and plugin resolvers are created
+        /// Initializes a new instance of the <see cref="SiteBuilderApplicationBase"/> class.
         /// </summary>
-        /// <param name="umbracoApplication"></param>
-        /// <param name="applicationContext"></param>
-        public void OnApplicationInitialized(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
-        {            
-        }
-
-        /// <summary>
-        /// Executes before resolution is frozen so that you are able to modify any plugin resolvers
-        /// </summary>
-        /// <param name="umbracoApplication"></param>
-        /// <param name="applicationContext"></param>
-        public void OnApplicationStarting(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
+        public SiteBuilderApplicationBase()
         {
-            if (USiteBuilderConfiguration.EnableDefaultControllerType)
-            {
-                DefaultRenderMvcControllerResolver.Current.SetDefaultControllerType(typeof(TemplateBaseController));
-            }
-        }
-
-        /// <summary>
-        /// Executes after resolution is frozen so you can get objects from the plugin resolvers. This is the most common method to put logic in.
-        /// </summary>
-        /// <param name="umbracoApplication"></param>
-        /// <param name="applicationContext"></param>
-        public void OnApplicationStarted(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
-        {
+            // Adds the httpmodule, if it's already added, this method does nothing
             WebConfigManager.AddHttpModule("USiteBuilderHttpModule", "Vega.USiteBuilder.USiteBuilderHttpModule, Vega.USiteBuilder");
         }
     }

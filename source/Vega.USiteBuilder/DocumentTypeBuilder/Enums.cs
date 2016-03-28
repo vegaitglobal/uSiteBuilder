@@ -1,5 +1,10 @@
 ﻿namespace Vega.USiteBuilder
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     /// <summary>
     /// Document type property Data Type (as defined in Umbraco Data Types section)
     /// </summary>

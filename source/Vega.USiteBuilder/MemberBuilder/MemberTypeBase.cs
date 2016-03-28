@@ -89,46 +89,5 @@ using System.Web.Security;
         /// Create date of this content item.
         /// </summary>
         public DateTime CreateDate { get; internal set; }
-
-        /// <summary>
-        /// Source member object.
-        /// </summary>
-        internal Member Source { get; set; }
-
-        /// <summary>
-        /// Gets or sets the <see cref="System.Object"/> value at the specified index.
-        /// </summary>
-        /// <value>
-        /// The <see cref="System.Object"/>.
-        /// </value>
-        /// <param name="index">The index.</param>
-        /// <returns></returns>
-        internal object this[string index]
-        {
-            get
-            {
-                if (_propertyValues.ContainsKey(index))
-                {
-                    return _propertyValues[index];
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            set
-            {
-                if (_propertyValues.ContainsKey(index))
-                {
-                    _propertyValues[index] = value;
-                }
-                else
-                {
-                    _propertyValues.Add(index, value);
-                }
-            }
-        }
-
-        private Dictionary<string, object> _propertyValues = new Dictionary<string, object>();
     }
 }

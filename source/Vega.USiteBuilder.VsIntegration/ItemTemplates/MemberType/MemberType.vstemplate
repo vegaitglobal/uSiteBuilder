@@ -1,0 +1,17 @@
+﻿<VSTemplate Type="Item" Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>Member Type</Name>
+    <Description>Creates new Umbraco Member Type</Description>
+    <DefaultName>MemberType.cs</DefaultName>
+    <ProjectType>CSharp</ProjectType>
+    <ProjectSubType>Vega.USiteBuilder</ProjectSubType>
+    <SortOrder>12</SortOrder>
+    <ProvideDefaultName>true</ProvideDefaultName>
+    <Icon>MemberType.ico</Icon>
+  </TemplateData>
+  <TemplateContent>
+    <ProjectItem TargetFileName="$fileinputname$.cs" ReplaceParameters="true">
+      MemberType.cs
+    </ProjectItem>
+  </TemplateContent>
+</VSTemplate>

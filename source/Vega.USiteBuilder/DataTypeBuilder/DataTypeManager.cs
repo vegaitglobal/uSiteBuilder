@@ -1,15 +1,11 @@
-﻿using System.Windows.Forms;
-using Umbraco.Core.Models;
-using Umbraco.Core.Services;
-using ApplicationContext = Umbraco.Core.ApplicationContext;
-
-namespace Vega.USiteBuilder
+﻿namespace Vega.USiteBuilder
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-    using DBTypes = umbraco.cms.businesslogic.datatype.DBTypes;
 
+	using umbraco.BusinessLogic;
+	using umbraco.cms.businesslogic.datatype;
 
 	/// <summary>
 	/// Manages DataType synchronization
@@ -36,96 +32,65 @@ namespace Vega.USiteBuilder
 			this.SynchronizeDataTypes();
 		}
 
-	    protected IDataTypeService DataTypeService
-	    {
-            get { return ApplicationContext.Current.Services.DataTypeService; }
-	    }
+		private void SynchronizeDataTypes()
+		{
+			var factory = new umbraco.cms.businesslogic.datatype.controls.Factory();
 
-        private IDictionary<string, PreValue> GetEditorSettings(Type typeDataType)
-	    {
-            var instance = (DataTypeBase)Types.Activation.Activator.Current.GetInstance(typeDataType);
+			foreach (Type typeDataType in Util.GetFirstLevelSubTypes(typeof(DataTypeBase)))
+			{
+				var dataTypeAttr = GetDataTypeAttribute(typeDataType);
 
-            DataTypePrevalue[] prevalues = instance.Prevalues;
+				try
+				{
+					this.AddToSynchronized(null, dataTypeAttr.Name, typeDataType);
+				}
+				catch (ArgumentException exc)
+				{
+					throw new Exception(
+						string.Format(
+							"DataType with name '{0}' already exists! Please use unique DataType names. DataType causing the problem: '{1}' (assembly: '{2}'). Error message: {3}",
+							dataTypeAttr.Name,
+							typeDataType.FullName,
+							typeDataType.Assembly.FullName,
+							exc.Message));
+				}
 
-            if (prevalues == null)
-            {
-                return new Dictionary<string, PreValue>();
-            }
+                var dtd = DataTypeDefinition.GetAll().FirstOrDefault(d => d.Text == dataTypeAttr.Name || (!string.IsNullOrEmpty(dataTypeAttr.UniqueId) && d.UniqueId == new Guid(dataTypeAttr.UniqueId)));
 
-            var result = prevalues.ToDictionary(x => x.Alias, x => new PreValue(x.SortOrder, x.Value));
-            return result;
-        }
-
-        private void SynchronizeDataTypes()
-        {
-            foreach (Type typeDataType in Util.GetFirstLevelSubTypes(typeof(DataTypeBase)))
-            {
-                var dataTypeAttr = GetDataTypeAttribute(typeDataType);
-
-                try
-                {
-	                this.AddToSynchronized(null, dataTypeAttr.Name, typeDataType);
-                }
-                catch (ArgumentException exc)
-                {
-	                throw new Exception(
-		                string.Format(
-			                "DataType with name '{0}' already exists! Please use unique DataType names. DataType causing the problem: '{1}' (assembly: '{2}'). Error message: {3}",
-			                dataTypeAttr.Name,
-			                typeDataType.FullName,
-			                typeDataType.Assembly.FullName,
-			                exc.Message));
-                }
-
-                // Old code that caused the error.
-                //// var dtd = DataTypeService.GetDataTypeDefinitionByPropertyEditorAlias(dataTypeAttr.PropertyEditorAlias).FirstOrDefault();
-
-                var dtd = this.DataTypeService.GetAllDataTypeDefinitions().FirstOrDefault(d => d.Name == dataTypeAttr.Name || (!string.IsNullOrEmpty(dataTypeAttr.UniqueId) && d.Key == new Guid(dataTypeAttr.UniqueId)));
-
-                // If there are no datatypes with name already we can go ahead and create one
+				// If there are no datatypes with name already we can go ahead and create one
                 if (dtd == null)
                 {
-                    var newDataTypeDefinition = new DataTypeDefinition(dataTypeAttr.ParentId, dataTypeAttr.PropertyEditorAlias)
-                    {
-                        Name = dataTypeAttr.Name,
-                        DatabaseType = dataTypeAttr.DataTypeDatabaseType
-                    };
-
                     if (!string.IsNullOrEmpty(dataTypeAttr.UniqueId))
                     {
-                        newDataTypeDefinition.Key = new Guid(dataTypeAttr.UniqueId);
-                    }
-
-                    var codeFirstSettings = GetEditorSettings(typeDataType);
-
-                    if (codeFirstSettings.Any())
-                    {
-                        DataTypeService.SaveDataTypeAndPreValues(newDataTypeDefinition, codeFirstSettings);
+                        dtd = DataTypeDefinition.MakeNew(User.GetUser(0), dataTypeAttr.Name,
+                                                         new Guid(dataTypeAttr.UniqueId));
                     }
                     else
                     {
-                        DataTypeService.Save(newDataTypeDefinition);
+                        dtd = DataTypeDefinition.MakeNew(User.GetUser(0), dataTypeAttr.Name);
                     }
                 }
-                // data type definition already present
-                else
-                {
-                    // var settings = GetEditorSettings(typeDataType);
 
-                    var existingSettings = DataTypeService.GetPreValuesCollectionByDataTypeId(dtd.Id);
+			    dtd.DataType = factory.DataType(new Guid(dataTypeAttr.RenderControlGuid));
+                dtd.Text = dataTypeAttr.Name;
 
-                    if (existingSettings == null || existingSettings.IsDictionaryBased ? !existingSettings.PreValuesAsDictionary.Any() : !existingSettings.PreValuesAsArray.Any())
-                    {
-                        var codeFirstSettings = GetEditorSettings(typeDataType);
+			    System.Web.HttpRuntime.Cache.Remove(string.Format("UmbracoDataTypeDefinition{0}", dtd.UniqueId));
 
-                        if (codeFirstSettings.Any())
-                        {
-                            DataTypeService.SavePreValues(dtd.Id, codeFirstSettings);
-                        }
-                    }
-                }
-            }
-        }
+				dtd.Save();
+                
+				var instance = Activator.CreateInstance(typeDataType, null) as DataTypeBase;
+				DataTypePrevalue[] prevalues = instance.Prevalues;
+				if (prevalues.Any())
+				{
+					var settingsStorage = new DataEditorSettingsStorage();
+                    
+                    // updating all settings to those defined in datatype class
+                    // If you've exported, all settings will be defined here anyway?
+                    settingsStorage.ClearSettings(dtd.Id);
+                    settingsStorage.InsertSettings(dtd.Id, prevalues.Select(pre => new Setting<string, string> { Key = pre.Alias, Value = pre.Value }).ToList());
+				}
+			}
+		}
 
 		/// <summary>
 		/// Get's the document type attribute or returns attribute with default values if attribute is not found

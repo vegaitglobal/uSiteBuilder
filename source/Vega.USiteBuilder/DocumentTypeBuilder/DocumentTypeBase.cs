@@ -1,109 +1,68 @@
-﻿using System;
-using System.Collections.Generic;
-
-using umbraco.BusinessLogic;
+﻿using System.Linq;
+using Umbraco.Core.Models;
+using umbraco.MacroEngines;
 using umbraco.NodeFactory;
 
 namespace Vega.USiteBuilder
 {
+    using System;
+    using System.Collections.Generic;
+    using umbraco.BusinessLogic;
+
     /// <summary>
     /// Base class for all document types.
     /// </summary>
-    public abstract class DocumentTypeBase : ContentTypeBase
+    public abstract class DocumentTypeBase : DynamicNode
     {
-        #region [Node properties]
-        /// <summary>
-        /// Create date of this content item.
-        /// </summary>
-        public DateTime CreateDate { get; internal set; }
-        /// <summary>
-        /// Last update date of this content item.
-        /// </summary>
-        public DateTime UpdateDate { get; internal set; }
-        /// <summary>
-        /// Id of the user who created this content item.
-        /// </summary>
-        public int CreatorId { get; internal set; }
-        /// <summary>
-        /// Name of the user who created this content item.
-        /// </summary>
-        public string CreatorName { get; internal set; }
-        /// <summary>
-        /// Id of this content item.
-        /// </summary>
-        public int Id { get; internal set; }
-        /// <summary>
-        /// Name of this content item.
-        /// </summary>
-        public string Name { get; set; }
-        /// <summary>
-        /// Nice url of this content item.
-        /// </summary>
-        public string NiceUrl { get; internal set; }
-        /// <summary>
-        /// Document Type alias of this content item.
-        /// </summary>
-        public string NodeTypeAlias { get; internal set; }
-        /// <summary>
-        /// Id of a parent node of this content item.
-        /// </summary>
-        public int ParentId { get; set; }
-        /// <summary>
-        /// Path of this content item.
-        /// </summary>
-        public string Path { get; internal set; }
-        /// <summary>
-        /// Sort order of this content item.
-        /// </summary>
-        public int SortOrder { get; internal set; }
-        /// <summary>
-        /// Template associated with this content item.
-        /// </summary>
-        public int Template { get; internal set; }
-        /// <summary>
-        /// Url of this content item
-        /// </summary>
-        public string Url { get; internal set; }
-        /// <summary>
-        /// Version of this content item
-        /// </summary>
-        public Guid Version { get; internal set; }
-        /// <summary>
-        /// Writer id of this content item
-        /// </summary>
-        public int WriterID { get; internal set; }
-        /// <summary>
-        /// Name of the Writer of this content item
-        /// </summary>
-        public string WriterName { get; internal set; }
-        #endregion
+        public DocumentTypeBase()
+        {
+        }
 
+        protected DocumentTypeBase(int nodeId)
+            : base(nodeId)
+        {
+        }
+        
         #region [Public methods]
-		
-		/// <summary>
-		/// Gets all ancestor nodes of a given type from a given node.
-		/// </summary>
-		/// <typeparam name="T">Strongly typed content item</typeparam>
-		public IEnumerable<T> GetAncestors<T>()
-			where T : DocumentTypeBase, new()
-		{
-			return ContentHelper.GetAncestors<T>(this.Id);
-		}
 
-	    /// <summary>
-	    /// Gets all ancestor nodes from a given node. 
-	    /// </summary>
-	    public IEnumerable<DocumentTypeBase> GetAncestors()
-	    {
-		    return ContentHelper.GetAncestors(this.Id);
-	    }
 
-	    /// <summary>
+        public T TypedAncestorOrSelf<T>() where T : DocumentTypeBase, new()
+        {
+            DynamicNode ancestorOrSelf = this.AncestorOrSelf(DocumentTypeManager.GetDocumentTypeAlias(typeof (T)));
+
+            return ContentHelper.GetByNodeId<T>(ancestorOrSelf.Id);
+        }
+
+        /// <summary>
+        /// Gets all descendant node of a given type from this node.
+        /// </summary>
+        /// <typeparam name="T">Strongly typed content item</typeparam>
+        public IEnumerable<T> TypedDescendants<T>() where T : DocumentTypeBase, new()
+        {
+            DynamicNodeList descendants = Descendants(DocumentTypeManager.GetDocumentTypeAlias(typeof(T)));
+
+            return descendants.Items.Select(d => ContentHelper.GetByNodeId<T>(d.Id));
+        }
+
+        /// <summary>
+        /// Gets all children of a given type from this node.
+        /// </summary>
+        /// <typeparam name="T">Strongly typed content item</typeparam>
+        public IEnumerable<T> TypedChildren<T>() where T : DocumentTypeBase, new()
+        {
+            var documentTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeof (T));
+            IEnumerable<DynamicNode> descendants = this.ChildrenAsList.Where(c => c.NodeTypeAlias == documentTypeAlias);
+
+            return descendants.Select(d => ContentHelper.GetByNodeId<T>(d.Id));
+        }
+
+
+        /// <summary>
         /// Gets all children nodes of a given type from a given node id.
         /// </summary>
         /// <typeparam name="T">Strongly typed content item</typeparam>
-        /// <param name="deepGet">If true it does deep search for children in the whole content tree starting from node whose id is parentId)</param>
-        public IEnumerable<T> GetChildren<T>(bool deepGet)
+        /// <param name="deepGet">If true it does deep search for children in the whole content tree starting from this item)</param>
+        public List<T> GetChildren<T>(bool deepGet)
             where T : DocumentTypeBase, new()
         {
             return ContentHelper.GetChildren<T>(this.Id, deepGet);
@@ -114,7 +73,7 @@ namespace Vega.USiteBuilder
         /// Note: This method returns only first level children - it doesn't return children's children.
         /// </summary>
         /// <typeparam name="T">Strongly typed content item</typeparam>
-        public IEnumerable<T> GetChildren<T>()
+        public List<T> GetChildren<T>()
             where T : DocumentTypeBase, new()
         {
             return ContentHelper.GetChildren<T>(this.Id);
@@ -124,7 +83,7 @@ namespace Vega.USiteBuilder
         /// Gets all children nodes from a given node id.
         /// Note: This method returns only first level children - it doesn't return children's children.
         /// </summary>
-        public IEnumerable<DocumentTypeBase> GetChildren()
+        public List<DocumentTypeBase> GetChildren()
         {
             return ContentHelper.GetChildren(this.Id);
         }
@@ -134,12 +93,12 @@ namespace Vega.USiteBuilder
         /// </summary>
         /// <param name="deepGet">if set to <c>true</c> method will return children's children (complete tree).</param>
         /// <returns></returns>
-        public IEnumerable<DocumentTypeBase> GetChildren(bool deepGet)
+        public List<DocumentTypeBase> GetChildren(bool deepGet)
         {
-			return ContentHelper.GetChildren(this.Id, deepGet);
+            return ContentHelper.GetChildren(this.Id);
         }
 
-        /// <summary>
+                /// <summary>
         /// Updates or adds the content item using current user. If content item already exists, it updates it.
         /// If content item doesn't exists, it creates new content item.
         /// NOTE: Set the ParentId property of this item.

@@ -1,0 +1,22 @@
+﻿<VSTemplate Type="Item" Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>Web User Control</Name>
+    <Description>Creates New Umbraco Web User Control</Description>
+    <DefaultName>WebUserControl.ascx</DefaultName>
+    <ProjectType>CSharp</ProjectType>
+    <ProjectSubType>Vega.USiteBuilder</ProjectSubType>
+    <SortOrder>30</SortOrder>
+    <ProvideDefaultName>true</ProvideDefaultName>
+    <Icon>WebUserControl.ico</Icon>
+  </TemplateData>
+  <TemplateContent>
+    <References />
+    <ProjectItem SubType="ASPXCodeBehind" TargetFileName="$fileinputname$.ascx" ReplaceParameters="true">WebUserControl.ascx</ProjectItem>
+    <ProjectItem SubType="Code" TargetFileName="$fileinputname$.ascx.cs" ReplaceParameters="true">WebUserControl.ascx.cs</ProjectItem>
+    <ProjectItem SubType="" TargetFileName="$fileinputname$.ascx.designer.cs" ReplaceParameters="true">WebUserControl.ascx.designer.cs</ProjectItem>
+  </TemplateContent>
+  <WizardExtension>
+    <Assembly>Vega.USiteBuilder.VsIntegration, Version=1.0.0.0, Culture=neutral, PublicKeyToken=e7ad2413b98961d2</Assembly>
+    <FullClassName>Vega.USiteBuilder.VsIntegration.WebUserControlWizardForm</FullClassName>
+  </WizardExtension>
+</VSTemplate>

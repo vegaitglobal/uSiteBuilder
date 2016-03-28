@@ -1,7 +1,6 @@
-﻿using System;
-using System.Web;
-
-using umbraco.NodeFactory;
+﻿using System.Web;
+using umbraco.presentation.nodeFactory;
+using System;
 
 namespace Vega.USiteBuilder
 {
@@ -31,10 +30,10 @@ namespace Vega.USiteBuilder
             {
                 if (this._currentContent == null)
                 {
-                    int nodeId = Node.getCurrentNodeId();
+                    int nodeId = Node.GetCurrent().Id;
                     if (!HttpContext.Current.Items.Contains(nodeId))
                     {
-                        T item = DocumentTypeResolver.Instance.GetTyped<T>(nodeId);
+                        T item = ContentHelper.GetByNodeId<T>(nodeId);
 
                         if (item == null)
                             throw new Exception(string.Format("The document type {0} does not exist in Umbraco, please run sync again. (siteBuilderSupressSynchronization=false)", typeof(T).Name));
