@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Setup", "Setup", "{100812D5-03AE-42BC-ADE4-53002D59B2DB}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VsIntegration", "VsIntegration", "{17CC5B67-F1BD-4887-9E82-378CFE309D66}"
 	ProjectSection(SolutionItems) = preProject
 		Vega.USiteBuilder.VsIntegration.ProjectTemplate\SiteBuilderProjectTemplate.vstemplate = Vega.USiteBuilder.VsIntegration.ProjectTemplate\SiteBuilderProjectTemplate.vstemplate
@@ -13,10 +11,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder.VsIntegration", "Vega.USiteBuilder.VsIntegration\Vega.USiteBuilder.VsIntegration.csproj", "{BDC7D7A5-DA09-449D-A67C-3BB6430F9111}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder.VsIntegration.ProjectTemplate", "Vega.USiteBuilder.VsIntegration.ProjectTemplate\Vega.USiteBuilder.VsIntegration.ProjectTemplate.csproj", "{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}"
-EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Vega.USiteBuilder.Setup", "Vega.USiteBuilder.Setup\Vega.USiteBuilder.Setup.vdproj", "{9194305A-4575-4039-87A7-7B258D7EB91E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vega.USiteBuilder.Setup.CustomActions", "Vega.USiteBuilder.Setup.CustomActions\Vega.USiteBuilder.Setup.CustomActions.csproj", "{5EA511B4-AA10-431A-941C-50D3C63BC3FE}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
@@ -39,19 +33,11 @@ Global
 		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9194305A-4575-4039-87A7-7B258D7EB91E}.Debug|Any CPU.ActiveCfg = Debug
-		{9194305A-4575-4039-87A7-7B258D7EB91E}.Release|Any CPU.ActiveCfg = Release
-		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5EA511B4-AA10-431A-941C-50D3C63BC3FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{9194305A-4575-4039-87A7-7B258D7EB91E} = {100812D5-03AE-42BC-ADE4-53002D59B2DB}
-		{5EA511B4-AA10-431A-941C-50D3C63BC3FE} = {100812D5-03AE-42BC-ADE4-53002D59B2DB}
 		{BDC7D7A5-DA09-449D-A67C-3BB6430F9111} = {17CC5B67-F1BD-4887-9E82-378CFE309D66}
 		{0D8FEB12-EB71-4D44-88D6-C44A6C1F6637} = {17CC5B67-F1BD-4887-9E82-378CFE309D66}
 	EndGlobalSection
