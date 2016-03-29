@@ -34,7 +34,7 @@ namespace Vega.USiteBuilder
         {
             List<Type> retVal = new List<Type>();
 
-            Assembly[] assemblies = GetSiteBuilderAssemblies();
+            var assemblies = GetSiteBuilderAssemblies();
 
             // NOTE: The similar functionality is located in the method bellow
             foreach (Assembly assembly in assemblies)
@@ -70,7 +70,7 @@ namespace Vega.USiteBuilder
         {
             List<Type> retVal = new List<Type>();
 
-            Assembly[] assemblies = GetSiteBuilderAssemblies();
+            var assemblies = GetSiteBuilderAssemblies();
 
             // NOTE: The similar functionality is located in the method above
             foreach (Assembly assembly in assemblies)
@@ -91,26 +91,20 @@ namespace Vega.USiteBuilder
             return retVal;
         }
 
-        private static Assembly[] GetSiteBuilderAssemblies()
+        private static List<Assembly> GetSiteBuilderAssemblies()
         {
-            if (USiteBuilderConfiguration.Assemblies != "")
+            if (!string.IsNullOrEmpty(USiteBuilderConfiguration.Assemblies))
             {
                 string[] assemblynames = USiteBuilderConfiguration.Assemblies.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
-                List<Assembly> result = new List<Assembly>();
-
-                foreach (string name in assemblynames)
-                {
-                    // This will throw an exception if we spelled it wrong.
-                    result.Add(Assembly.Load(name));
-                }
+                List<Assembly> result = assemblynames.Select(Assembly.Load).ToList();
 
                 result.Add(Assembly.GetExecutingAssembly());
 
-                return result.ToArray();
+                return result;
             }
-            else
-                return AppDomain.CurrentDomain.GetAssemblies();
+
+            return AppDomain.CurrentDomain.GetAssemblies().ToList();
         }
 
 

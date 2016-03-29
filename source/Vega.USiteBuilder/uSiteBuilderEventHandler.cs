@@ -1,12 +1,11 @@
 ﻿using Umbraco.Core;
-using Vega.USiteBuilder.Configuration;
 
 namespace Vega.USiteBuilder
 {
     /// <summary>
     /// uSiteBuilder startup
     /// </summary>
-    public class uSiteBuilderEventHandler : IApplicationEventHandler 
+    public class uSiteBuilderEventHandler : IApplicationEventHandler
     {
         /// <summary>
         /// Called when [application initialized].
@@ -33,10 +32,7 @@ namespace Vega.USiteBuilder
         /// <param name="applicationContext">The application context.</param>
         public void OnApplicationStarted(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
         {
-            if (!USiteBuilderConfiguration.SuppressSynchronization)
-            {
-                UmbracoManager.SynchronizeIfNotSynchronized();
-            }
+            UmbracoManager.SynchronizeIfNotSynchronized();
         }
     }
 }

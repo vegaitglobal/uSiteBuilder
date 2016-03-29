@@ -9,6 +9,7 @@ using umbraco.cms.businesslogic.member;
 using umbraco.cms.businesslogic.property;
 using Vega.USiteBuilder.DocumentTypeBuilder;
 using Vega.USiteBuilder.MemberBuilder;
+using Vega.USiteBuilder.Types;
 
 namespace Vega.USiteBuilder
 {
@@ -85,7 +86,11 @@ namespace Vega.USiteBuilder
                         propertyAlias, member.Id, memberType.Alias));
                 }
 
-                if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
+                if (propAttr.CustomTypeConverter != null)
+                {
+                    property.Value = ((ICustomTypeConvertor)Activator.CreateInstance(propAttr.CustomTypeConverter)).ConvertValueWhenWrite(propInfo.GetValue(member, null));
+                }
+                else if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
                 {
                     property.Value = ContentHelper.PropertyConvertors[propInfo.PropertyType].ConvertValueWhenWrite(propInfo.GetValue(member, null));
                 }
@@ -107,19 +112,9 @@ namespace Vega.USiteBuilder
         /// <returns>List of all members</returns>
         public static List<MemberTypeBase> GetAllMembers()
         {
-            List<MemberTypeBase> retVal = new List<MemberTypeBase>();
             Member[] members = Member.GetAll;
 
-            foreach (Member member in members)
-            {
-                MemberTypeBase m = GetMember(member);
-                if (m != null)
-                {
-                    retVal.Add(m);
-                }
-            }
-
-            return retVal;
+            return members.Select(GetMember).Where(m => m != null).ToList();
         }
 
         /// <summary>
@@ -282,9 +277,9 @@ namespace Vega.USiteBuilder
                             }
                         }
                         else if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
-                        {
+                        {                            
                             // will be transformed later. TODO: move transformation here
-                            value = property.Value;
+                            value = ContentHelper.PropertyConvertors[propInfo.PropertyType].ConvertValueWhenRead(value);
                         }
                         else if (propInfo.PropertyType.IsGenericType &&
                                  propInfo.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -296,6 +291,10 @@ namespace Vega.USiteBuilder
                             }
 
                             // TODO: If data type is DateTime and is nullable and is less than 1.1.1000 than set it to NULL
+                        }
+                        else if (propAttr.CustomTypeConverter != null)
+                        {
+                            value = ((ICustomTypeConvertor)Activator.CreateInstance(propAttr.CustomTypeConverter)).ConvertValueWhenRead(property.Value);
                         }
                         else
                         {

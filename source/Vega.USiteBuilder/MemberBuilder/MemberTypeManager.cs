@@ -155,9 +155,10 @@ namespace Vega.USiteBuilder.MemberBuilder
                     memberTypeAlias, typeMemberType.FullName, typeMemberType.Assembly.FullName, exc.Message));
             }
 
+            _memberTypes.Add(memberTypeAlias, typeMemberType);
+
             if (!USiteBuilderConfiguration.SuppressSynchronization)
             {
-                _memberTypes.Add(memberTypeAlias, typeMemberType);
 
                 MemberType memberType = MemberType.GetByAlias(memberTypeAlias) ??
                                         MemberType.MakeNew(siteBuilderUser, memberTypeName);

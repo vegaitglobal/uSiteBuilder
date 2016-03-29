@@ -41,6 +41,8 @@ namespace Vega.USiteBuilder
 
         private static void Synchronize()
         {
+            SynchronizeMemberTypes();
+
             // stop processing here if the synchroniser is suppressed
             if (USiteBuilderConfiguration.SuppressSynchronization)
                 return;
@@ -48,7 +50,6 @@ namespace Vega.USiteBuilder
 			SynchronizeDatatTypes();
             SynchronizeTemplates();
             SynchronizeDocumentTypes();
-            SynchronizeMemberTypes();
             SynchronizeUserControls();
             //SynchronizeRazorMacros();
 
