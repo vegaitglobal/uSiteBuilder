@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using umbraco.cms.businesslogic;
@@ -224,14 +225,21 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
             }
 
             DocumentTypes.Add(docTypeAlias, typeDocType);
-
+            Debug.WriteLine("Syncing doc type: " + docTypeAlias);
             DocumentType docType = DocumentType.GetByAlias(docTypeAlias) ??
                                    DocumentType.MakeNew(siteBuilderUser, docTypeName);
 
             docType.Text = docTypeName;
+            if(docType.Alias != docTypeAlias)
             docType.Alias = docTypeAlias;
+
+            if(docType.IconUrl != docTypeAttr.IconUrl)
             docType.IconUrl = docTypeAttr.IconUrl;
+
+            if(docType.Thumbnail != docTypeAttr.Thumbnail)
             docType.Thumbnail = docTypeAttr.Thumbnail;
+
+            if(docType.Description != docTypeAttr.Description)
             docType.Description = docTypeAttr.Description;
 
             if (baseTypeDocType == typeof(DocumentTypeBase))
