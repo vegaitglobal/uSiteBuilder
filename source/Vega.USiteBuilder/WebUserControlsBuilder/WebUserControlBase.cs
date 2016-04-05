@@ -1,6 +1,5 @@
 ﻿using System.Web;
 using System.Web.UI;
-using umbraco.presentation.nodeFactory;
 using Vega.USiteBuilder.DocumentTypeBuilder;
 
 namespace Vega.USiteBuilder.WebUserControlsBuilder
@@ -33,7 +32,7 @@ namespace Vega.USiteBuilder.WebUserControlsBuilder
             {
                 if (!_contentNodeId.HasValue)
                 {
-                    _contentNodeId = Node.GetCurrent().Id;
+                    _contentNodeId = umbraco.NodeFactory.Node.GetCurrent().Id;
                 }
 
                 return (int)_contentNodeId;

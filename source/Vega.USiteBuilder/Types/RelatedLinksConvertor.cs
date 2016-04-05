@@ -61,7 +61,7 @@ namespace Vega.USiteBuilder.Types
                             case "internal": // points to some node so Url is nodeid
                                 rl.Type = RelatedLink.RelatedLinkType.Internal;
                                 rl.RelatedNodeId = int.Parse(node.Attributes["link"].Value);
-                                rl.Url = new Node((int)rl.RelatedNodeId).NiceUrl;
+                                rl.Url = new umbraco.NodeFactory.Node((int)rl.RelatedNodeId).NiceUrl;
                                 break;
                             case "media":
                                 rl.Type = RelatedLink.RelatedLinkType.Media;

@@ -7,10 +7,8 @@ using System.Xml.XPath;
 using umbraco;
 using umbraco.BusinessLogic;
 using umbraco.cms.businesslogic.web;
-using umbraco.presentation.nodeFactory;
 using Vega.USiteBuilder.DocumentTypeBuilder;
 using Vega.USiteBuilder.Types;
-//using umbraco.NodeFactory;
 
 namespace Vega.USiteBuilder
 {
@@ -43,7 +41,7 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static DocumentTypeBase GetCurrentContent()
         {
-            return GetByNode(Node.GetCurrent());
+            return GetByNode(umbraco.NodeFactory.Node.GetCurrent());
         }
 
         /// <summary>
@@ -57,11 +55,11 @@ namespace Vega.USiteBuilder
         {
             List<T> retVal = new List<T>();
 
-            Node parentNode = new Node(parentId);
+            var parentNode = new umbraco.NodeFactory.Node(parentId);
 
             string docTypeAlias = DocumentTypeManager.GetDocumentTypeAlias(typeof(T));
 
-            foreach (Node childNode in parentNode.Children)
+            foreach (umbraco.NodeFactory.Node childNode in parentNode.Children)
             {
                 // Check if this childNode is of a given document type and if not deleted
                 if (docTypeAlias == childNode.NodeTypeAlias && !IsInRecycleBin(childNode.Path))
@@ -114,11 +112,11 @@ namespace Vega.USiteBuilder
         {
             List<DocumentTypeBase> retVal = new List<DocumentTypeBase>();
 
-            Node parentNode = new Node(parentId);
+            var parentNode = new umbraco.NodeFactory.Node(parentId);
 
             if (parentNode.Id == parentId && parentNode.Children != null) // check if it is loaded correctly
             {
-                foreach (Node childNode in parentNode.Children)
+                foreach (umbraco.NodeFactory.Node childNode in parentNode.Children)
                 {
                     // Check if this childNode is not deleted
                     if (!IsInRecycleBin(childNode.Path))
@@ -149,7 +147,7 @@ namespace Vega.USiteBuilder
         public static T GetByNodeId<T>(int nodeId)
             where T : DocumentTypeBase, new()
         {
-            Node node = new Node(nodeId);
+            var node = new umbraco.NodeFactory.Node(nodeId);
 
             return GetByNode<T>(node);
         }
@@ -161,7 +159,7 @@ namespace Vega.USiteBuilder
         /// <typeparam name="T">Strongly typed content item</typeparam>
         /// <param name="node">node associated with the content item</param>
         /// <returns>Content item</returns>
-        public static T GetByNode<T>(Node node)
+        public static T GetByNode<T>(umbraco.NodeFactory.Node node)
              where T : DocumentTypeBase, new()
         {
             DocumentTypeBase retVal = GetByNode(node);
@@ -190,7 +188,7 @@ namespace Vega.USiteBuilder
         /// <returns>Content item</returns>
         public static DocumentTypeBase GetByNodeId(int nodeId)
         {
-            Node node = new Node(nodeId);
+            var node = new umbraco.NodeFactory.Node(nodeId);
 
             return GetByNode(node);
         }
@@ -202,7 +200,7 @@ namespace Vega.USiteBuilder
         /// </summary>
         /// <param name="node">node associated with the content item</param>
         /// <returns>Content item</returns>
-        public static DocumentTypeBase GetByNode(Node node)
+        public static DocumentTypeBase GetByNode(umbraco.NodeFactory.Node node)
         {
             if (node == null || node.NodeTypeAlias == null || node.Id == 0)
             {
@@ -237,7 +235,7 @@ namespace Vega.USiteBuilder
                     string propertyAlias;
                     DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-                    Property property = node.GetProperty(propertyAlias);
+                    var property = node.GetProperty(propertyAlias);
 
                     object value = null;
                     try
@@ -356,7 +354,7 @@ namespace Vega.USiteBuilder
 
             foreach (XmlNode node in nodes)
             {
-                Node n = new Node(node);
+                var n = new umbraco.NodeFactory.Node(node);
 
                 var d = GetByNode(n);
                 if (d != null)
@@ -480,7 +478,7 @@ namespace Vega.USiteBuilder
         /// <param name="deletePermanently">if set to <c>true</c>, node will be deleted without moving to Trash (otherwise items is moved to Trash).</param>
         public static void DeleteContent(int id, bool deletePermanently)
         {
-            Document document = new Document(id);
+            var document = new Document(id);
 
             if (document.Published)
             {

@@ -1,6 +1,5 @@
 using System;
 using System.Web;
-using umbraco.presentation.nodeFactory;
 using Umbraco.Web.Mvc;
 using Vega.USiteBuilder.DocumentTypeBuilder;
 
@@ -31,7 +30,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
             {
                 if (_currentContent == null)
                 {
-                    int nodeId = Node.GetCurrent().Id;
+                    int nodeId = umbraco.NodeFactory.Node.GetCurrent().Id;
                     if (!HttpContext.Current.Items.Contains(nodeId))
                     {
                         T item = ContentHelper.GetByNodeId<T>(nodeId);

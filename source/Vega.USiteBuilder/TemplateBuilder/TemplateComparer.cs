@@ -6,7 +6,6 @@ using umbraco.cms.businesslogic.template;
 using Umbraco.Core;
 using Umbraco.Core.IO;
 using Vega.USiteBuilder.DocumentTypeBuilder;
-using IOHelper = umbraco.IO.IOHelper;
 
 namespace Vega.USiteBuilder.TemplateBuilder
 {
@@ -123,7 +122,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
                 if (template == null)
                 {
                     string path =
-                        IOHelper.MapPath(umbraco.IO.SystemDirectories.Masterpages + "/" + alias.Replace(" ", "") + ".master");
+                        IOHelper.MapPath(SystemDirectories.Masterpages + "/" + alias.Replace(" ", "") + ".master");
 
                     if (File.Exists(path))
                     {
