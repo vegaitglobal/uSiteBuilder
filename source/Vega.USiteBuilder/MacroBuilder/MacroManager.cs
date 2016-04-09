@@ -76,7 +76,6 @@ namespace Vega.USiteBuilder.MacroBuilder
                                                   MacroProperty.MakeNew(macro, parameter.Show, parameter.Alias, parameter.Name, type);
 
                     macroProperty.Name = parameter.Name;
-                    macroProperty.Public = parameter.Show;
                     macroProperty.Type = type;
                     macroProperty.SortOrder = sortOrder;
                     

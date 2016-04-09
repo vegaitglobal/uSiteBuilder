@@ -129,7 +129,6 @@
     <Compile Include="ContentHelper.cs" />
     <Compile Include="ContentHelperExtensions.cs" />
     <Compile Include="ContentUtil.cs" />
-    <Compile Include="DataTypeBuilder\DataTypeComparer.cs" />
     <Compile Include="DataTypeBuilder\DataTypeAttribute.cs" />
     <Compile Include="DataTypeBuilder\DataTypeBase.cs" />
     <Compile Include="DataTypeBuilder\DataTypeManager.cs" />
@@ -141,6 +140,7 @@
     <Compile Include="DocumentTypeBuilder\DocumentTypeManager.cs" />
     <Compile Include="DocumentTypeBuilder\DocumentTypePropertyAttribute.cs" />
     <Compile Include="DocumentTypeBuilder\Enums.cs" />
+    <Compile Include="DocumentTypeBuilder\MixinPropertyAttribute.cs" />
     <Compile Include="MacroBuilder\CustomControlMacroBase.cs" />
     <Compile Include="MacroBuilder\MacroBase.cs" />
     <Compile Include="MacroBuilder\MacroDefinition.cs" />
@@ -162,6 +162,11 @@
     <Compile Include="Razor\USiteBuilderNodeContext.cs" />
     <Compile Include="TemplateBuilder\TemplateComparer.cs" />
     <Compile Include="TemplateBuilder\UmbracoTemplatePageBase.cs" />
+    <Compile Include="Types\Activation\Activator.cs" />
+    <Compile Include="Types\Activation\ActivatorChain.cs" />
+    <Compile Include="Types\Activation\IActivator.cs" />
+    <Compile Include="Types\Activation\MvcDependencyResolverActivator.cs" />
+    <Compile Include="Types\Activation\ReflectionBasedActivator.cs" />
     <Compile Include="uSiteBuilderEventHandler.cs" />
     <Compile Include="TemplateBuilder\TemplateAttribute.cs" />
     <Compile Include="TemplateBuilder\TemplateBase.cs">

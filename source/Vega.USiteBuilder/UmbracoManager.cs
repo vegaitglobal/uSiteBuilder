@@ -61,32 +61,15 @@ namespace Vega.USiteBuilder
                 RegisterConvertors();
             }
         }
-
-        /// <summary>
-        /// Synchronizes the type of the document.
-        /// </summary>
-        /// <param name="siteBuilderType">Type of the site builder.</param>
-        public void SynchronizeDocumentType(Type siteBuilderType)
-        {
-            new DocumentTypeManager().SynchronizeDocumentType(siteBuilderType);
-        }
-
-        /// <summary>
-        /// Deletes the type of the document.
-        /// </summary>
-        /// <param name="alias">The alias.</param>
-        public void DeleteDocumentType(string alias)
-        {
-            new DocumentTypeManager().DeleteDocumentType(alias);
-        }
-
+        
         /// <summary>
         /// Previews the document type changes.
         /// </summary>
         /// <returns></returns>
         public static List<ContentComparison> PreviewDocumentTypeChanges()
         {
-            return DocumentTypeComparer.PreviewDocumentTypeChanges();
+            bool hasDefaultValues;
+            return DocumentTypeComparer.PreviewDocumentTypeChanges(out hasDefaultValues);
         }
 
         /// <summary>
@@ -96,15 +79,6 @@ namespace Vega.USiteBuilder
         public static List<ContentComparison> PreviewTemplateChanges()
         {
             return new TemplateComparer().PreviewTemplateChanges();
-        }
-
-        /// <summary>
-        /// Previews the data type changes.
-        /// </summary>
-        /// <returns></returns>
-        public static List<ContentComparison> PreviewDataTypeChanges()
-        {
-            return new DataTypeComparer().PreviewDataTypeChanges();
         }
 
         /// <summary>
@@ -134,8 +108,7 @@ namespace Vega.USiteBuilder
         /// </summary>
         public static void CleanUpDocumentTypes()
         {
-            DocumentTypeManager docTypeManager = new DocumentTypeManager();
-            docTypeManager.CleanUpDocumentTypes();
+            DocumentTypeManager.CleanUpDocumentTypes();
         }
 
         /// <summary>

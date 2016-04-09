@@ -136,7 +136,7 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
         /// <param name="publish">If set to <c>true</c> it contentItem will be published as well.</param>
         public void Save(User user, bool publish)
         {
-            ContentHelper.Save(this, user, publish);
+            ContentHelper.Save(this, user.Id, publish);
         }
         #endregion
     }

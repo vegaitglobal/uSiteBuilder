@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Web;
 using System.Xml;
 using System.Xml.XPath;
 using umbraco;
-using umbraco.BusinessLogic;
 using umbraco.cms.businesslogic.web;
+using Umbraco.Core;
+using Umbraco.Core.Models;
+using Umbraco.Core.Services;
 using Vega.USiteBuilder.DocumentTypeBuilder;
 using Vega.USiteBuilder.Types;
 
@@ -21,6 +24,7 @@ namespace Vega.USiteBuilder
         /// Contains list of all custom type convertors.
         /// </summary>
         internal static Dictionary<Type, ICustomTypeConvertor> PropertyConvertors = new Dictionary<Type, ICustomTypeConvertor>();
+        static readonly IContentService ContentService = ApplicationContext.Current.Services.ContentService;
 
         /// <summary>
         /// Registers document type property convertor.
@@ -375,7 +379,7 @@ namespace Vega.USiteBuilder
         /// <param name="publish">If set to <c>true</c> it contentItem will be published as well.</param>
         public static void Save(DocumentTypeBase contentItem, bool publish)
         {
-            Save(contentItem, Util.GetAdminUser(), publish);
+            Save(contentItem, Util.GetAdminUser().Id, publish);
         }
 
         /// <summary>
@@ -386,8 +390,9 @@ namespace Vega.USiteBuilder
         /// <param name="contentItem">Content item to update/add</param>
         public static void Save(DocumentTypeBase contentItem)
         {
-            Save(contentItem, Util.GetAdminUser(), true);
+            Save(contentItem, Util.GetAdminUser().Id, true);
         }
+
 
         /// <summary>
         /// Updates or adds the content item. If content item already exists, it updates it. 
@@ -395,16 +400,11 @@ namespace Vega.USiteBuilder
         /// NOTE: Set the ParentId property of this item.
         /// </summary>
         /// <param name="contentItem">Content item to update/add</param>
-        /// <param name="user">User used for add or updating the content</param>
+        /// <param name="userId">User used for add or updating the content</param>
         /// <param name="publish">If set to <c>true</c> it contentItem will be published as well.</param>
-        public static void Save(DocumentTypeBase contentItem, User user, bool publish)
+        public static void Save(DocumentTypeBase contentItem, int userId, bool publish)
         {
-            if (user == null)
-            {
-                throw new Exception("User cannot be null");
-            }
-
-            if (contentItem.Parent == null)
+            if (contentItem.Parent.Id < 1)
             {
                 throw new ArgumentException("Parent property cannot be null");
             }
@@ -414,22 +414,54 @@ namespace Vega.USiteBuilder
                 throw new Exception("Name property of this content item is not set");
             }
 
-            DocumentType docType = DocumentTypeManager.GetDocumentType(contentItem.GetType());
+            IContentType contentType = DocumentTypeManager.GetDocumentType(contentItem.GetType());
 
-            Document document;
+            IContent content;
             if (contentItem.Id == 0) // content item is new so create Document
             {
-                document = Document.MakeNew(contentItem.Name, docType, user, contentItem.Parent.Id);
+                content = ContentService.CreateContent(contentItem.Name, contentItem.Parent.Id, contentType.Alias);
             }
             else // content item already exists, so load it
             {
-                document = new Document(contentItem.Id);
+                content = ContentService.GetById(contentItem.Id);
             }
 
-            foreach (PropertyInfo propInfo in contentItem.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            var documentTypeProperties = contentItem.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            SaveProperties(contentItem, contentType, content, documentTypeProperties);
+
+            if (publish)
+            {
+                ContentService.SaveAndPublishWithStatus(content, userId);
+            }
+        }
+
+        /// <summary>
+        /// The method saves values from the given properties of the valueSource specified to the content of the contentType type
+        /// </summary>
+        /// <param name="valueSource">An object to get property values from. Can be either DocumentTypeBase or mixin object reference</param>
+        /// <param name="contentType">A content type information</param>
+        /// <param name="content">A content to save values to</param>
+        /// <param name="properties">A valueSource properties collection</param>
+        private static void SaveProperties(object valueSource, IContentType contentType, IContent content, IEnumerable<PropertyInfo> properties)
+        {
+            foreach (var propInfo in properties)
             {
                 try
                 {
+                    var mixinAttribute = Util.GetAttribute<MixinPropertyAttribute>(propInfo);
+                    if (mixinAttribute != null)
+                    {
+                        var mixin = propInfo.GetValue(valueSource, null);
+                        if (mixin != null)
+                        {
+                            var mixinType = mixinAttribute.GetMixinType(propInfo);
+                            var mixinProperties = mixinType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                            SaveProperties(mixin, contentType, content, mixinProperties);
+                        }
+                        continue;
+                    }
+
                     DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
                     if (propAttr == null)
                     {
@@ -440,34 +472,26 @@ namespace Vega.USiteBuilder
                     string propertyAlias;
                     DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-                    umbraco.cms.businesslogic.property.Property property = document.getProperty(propertyAlias);
+                    PropertyType property = content.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
                     if (property == null)
                     {
                         throw new Exception(string.Format("Property '{0}' not found in this node: {1}. Content type: {2}.",
-                            propertyAlias, document.Id, docType.Alias));
+                            propertyAlias, content.Id, contentType.Alias));
                     }
 
                     if (PropertyConvertors.ContainsKey(propInfo.PropertyType))
                     {
-                        property.Value = PropertyConvertors[propInfo.PropertyType].ConvertValueWhenWrite(propInfo.GetValue(contentItem, null));
+                        content.SetValue(propertyAlias, PropertyConvertors[propInfo.PropertyType].ConvertValueWhenWrite(propInfo.GetValue(valueSource, null)));
                     }
                     else
                     {
-                        property.Value = propInfo.GetValue(contentItem, null);
+                        content.SetValue(propertyAlias, propInfo.GetValue(valueSource, null));
                     }
                 }
                 catch (Exception exc)
                 {
-                    throw new Exception(String.Format("Error while saving property: {0}.{1}. Error: {2}, Stack trace: {3}", docType.Alias, propInfo.Name, exc.Message, exc.StackTrace), exc);
+                    throw new Exception(String.Format("Error while saving property: {0}.{1}. Error: {2}, Stack trace: {3}", contentType.Alias, propInfo.Name, exc.Message, exc.StackTrace), exc);
                 }
-            }
-
-            if (publish)
-            {
-                document.Publish(user);
-
-                library.UpdateDocumentCache(document.Id);
-                library.RefreshContent();
             }
         }
 
@@ -478,13 +502,15 @@ namespace Vega.USiteBuilder
         /// <param name="deletePermanently">if set to <c>true</c>, node will be deleted without moving to Trash (otherwise items is moved to Trash).</param>
         public static void DeleteContent(int id, bool deletePermanently)
         {
-            var document = new Document(id);
-
-            if (document.Published)
+            var document = ContentService.GetById(id);
+            if (deletePermanently)
             {
-                library.UnPublishSingleNode(document.Id);
+                ContentService.Delete(document);
             }
-            document.delete(deletePermanently);
+            else
+            {
+                ContentService.MoveToRecycleBin(document);
+            }
 
             library.RefreshContent();
         }

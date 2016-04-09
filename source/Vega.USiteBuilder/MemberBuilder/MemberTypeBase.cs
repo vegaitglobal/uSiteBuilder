@@ -29,7 +29,7 @@ namespace Vega.USiteBuilder.MemberBuilder
         /// <param name="newHashedPassword">The new hashed password.</param>
         public void ChangePassword(string newHashedPassword)
         {
-            Member member = new Member(Id);
+            var member = new Member(Id);
 
             member.ChangePassword(newHashedPassword);
         }

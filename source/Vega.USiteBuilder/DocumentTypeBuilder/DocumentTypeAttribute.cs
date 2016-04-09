@@ -103,5 +103,10 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
         /// as its generic parameter. By setting this property to some not null value, default behaviour is overriden.
         /// </summary>
         public string[] AllowedTemplates { get; set; }
+
+        /// <summary>
+        /// Only Content Types with this checked can be created at the root level of Content and Media trees
+        /// </summary>
+        public bool AllowAtRoot { get; set; }
     }
 }

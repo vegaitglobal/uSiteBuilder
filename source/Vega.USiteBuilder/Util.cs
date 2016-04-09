@@ -10,11 +10,11 @@ using System.Xml;
 using System.Xml.XPath;
 using umbraco;
 using umbraco.BusinessLogic;
-using umbraco.cms.businesslogic;
-using umbraco.cms.businesslogic.datatype;
-using umbraco.cms.businesslogic.propertytype;
 using Umbraco.Core;
+using Umbraco.Core.Models;
+using Umbraco.Core.Services;
 using Vega.USiteBuilder.Configuration;
+using DataTypeDefinition = umbraco.cms.businesslogic.datatype.DataTypeDefinition;
 
 namespace Vega.USiteBuilder
 {
@@ -24,9 +24,47 @@ namespace Vega.USiteBuilder
     internal static class Util
     {
         private static Version UmbracoVersion { get; set; }
+        private static List<Type> _types = null;
+        private static readonly IDataTypeService DataTypeService = ApplicationContext.Current.Services.DataTypeService;
+
+        private static List<Type> Types
+        {
+            get
+            {
+                if (_types == null)
+                {
+                    _types = new List<Type>();
+                    LoadTypes();
+                }
+
+                return _types;
+            }
+        }
+
+        private static void LoadTypes()
+        {
+            foreach (Assembly assembly in GetSiteBuilderAssemblies())
+            {
+                Module[] modules = assembly.GetLoadedModules();
+
+                foreach (Module module in modules)
+                {
+                    Type[] types = null;
+                    try
+                    {
+                        types = module.GetTypes();
+                        _types.AddRange(types);
+                    }
+                    catch
+                    {
+                        //TODO: add logging/exception handling
+                    } // required because Exception is thrown for some dlls when .GetTypes method is called
+                }
+            }
+        }
 
         /// <summary>
-        /// Gets all first level subtypes (directly inherited types) of type given as argument. 
+        /// Gets all first level subtypes (directly inherited types) of type given as argument.
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
@@ -34,31 +72,20 @@ namespace Vega.USiteBuilder
         {
             List<Type> retVal = new List<Type>();
 
-            var assemblies = GetSiteBuilderAssemblies();
-
             // NOTE: The similar functionality is located in the method bellow
-            foreach (Assembly assembly in assemblies)
+            try
             {
-                Module[] modules = assembly.GetLoadedModules();
-
-                foreach (Module module in modules)
+                foreach (Type t in Types)
                 {
-                    try
+                    if (t.BaseType != null && (t.BaseType.Equals(type) ||
+                        (type.IsGenericType && type.Name == t.BaseType.Name)) ||
+                        t.GetInterfaces().FirstOrDefault(i => i == type) != null)
                     {
-                        var types = module.GetTypes();
-                        foreach (Type t in types)
-                        {
-                            if (t.BaseType != null && (t.BaseType == type ||
-                                (type.IsGenericType && type.Name == t.BaseType.Name)) ||
-                                t.GetInterfaces().FirstOrDefault(i => i == type) != null)
-                            {
-                                retVal.Add(t);
-                            }
-                        }
+                        retVal.Add(t);
                     }
-                    catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
                 }
             }
+            catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
 
             return retVal;
         }
@@ -70,23 +97,18 @@ namespace Vega.USiteBuilder
         {
             List<Type> retVal = new List<Type>();
 
-            var assemblies = GetSiteBuilderAssemblies();
-
             // NOTE: The similar functionality is located in the method above
-            foreach (Assembly assembly in assemblies)
+            try
             {
-                Module[] modules = assembly.GetLoadedModules();
-
-                foreach (Module module in modules)
+                foreach (Type t in Types)
                 {
-                    try
+                    if (t.BaseType != null && t.IsSubclassOf(type))
                     {
-                        var types = module.GetTypes();
-                        retVal.AddRange(types.Where(t => t.BaseType != null && t.IsSubclassOf(type)));
+                        retVal.Add(t);
                     }
-                    catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
                 }
             }
+            catch { } // required because Exception is thrown for some dlls when .GetTypes method is called
 
             return retVal;
         }
@@ -106,7 +128,6 @@ namespace Vega.USiteBuilder
 
             return AppDomain.CurrentDomain.GetAssemblies().ToList();
         }
-
 
         /// <summary>
         /// Returns login name of Umbraco user used by USiteBuilder (for creating document types, templates etc...)
@@ -238,15 +259,34 @@ namespace Vega.USiteBuilder
         /// <param name="dt">The dt.</param>
         /// <param name="alias">The alias.</param>
         /// <param name="name">The name.</param>
-        public static void AddPropertyType(ContentType contentType, DataTypeDefinition dt, string alias, string name)
+        /// <param name="tabName">Name of the tab.</param>
+        public static void AddPropertyType(IContentTypeBase contentType, DataTypeDefinition dt, string alias, string name, string tabName)
         {
-            typeof(ContentType).GetMethod("AddPropertyType").Invoke(contentType, new object[] { dt, alias, name });
+            IDataTypeDefinition idt = DataTypeService.GetDataTypeDefinitionById(dt.Id);
+            Umbraco.Core.Models.PropertyType pt = new Umbraco.Core.Models.PropertyType(idt)
+            {
+                Alias = alias,
+                Name = name
+            };
+
+            if (String.IsNullOrEmpty(tabName))
+            {
+                contentType.AddPropertyType(pt);
+            }
+            else
+            {
+                contentType.AddPropertyType(pt, tabName);
+            }
         }
 
-        public static void DeletePropertyType(ContentType contentType, string alias)
+        public static void DeletePropertyType(IContentType contentType, string alias)
         {
-            PropertyType propertyType = contentType.PropertyTypes.SingleOrDefault(pt => pt.Alias == alias);
+            contentType.RemovePropertyType(alias);
+        }
 
+        public static void DeletePropertyType(umbraco.cms.businesslogic.member.MemberType memberType, string alias)
+        {
+            var propertyType = memberType.PropertyTypes.FirstOrDefault(x => x.Alias.Equals(alias, StringComparison.OrdinalIgnoreCase));
             if (propertyType != null)
             {
                 propertyType.delete();
@@ -259,9 +299,8 @@ namespace Vega.USiteBuilder
         /// <returns></returns>
         public static Version GetCurrentUmbracoVersion()
         {
-            return UmbracoVersion ?? (UmbracoVersion = typeof (content).Assembly.GetName().Version);
+            return UmbracoVersion ?? (UmbracoVersion = typeof(content).Assembly.GetName().Version);
         }
-
 
         /// <summary>
         /// Determines whether current instance of Umbraco is of version 4.7 or higher
@@ -356,6 +395,5 @@ namespace Vega.USiteBuilder
             document.Load(reader);
             return document;
         }
-
     }
 }

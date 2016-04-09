@@ -4,11 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Web;
 using umbraco.BusinessLogic;
-using umbraco.cms.businesslogic;
-using umbraco.cms.businesslogic.datatype;
-using umbraco.cms.businesslogic.propertytype;
+using Umbraco.Core.Models;
 using Vega.USiteBuilder.DataTypeBuilder;
 using Vega.USiteBuilder.DocumentTypeBuilder;
+using DataTypeDefinition = umbraco.cms.businesslogic.datatype.DataTypeDefinition;
 
 namespace Vega.USiteBuilder
 {
@@ -87,23 +86,24 @@ namespace Vega.USiteBuilder
         }
 
         #region [Document type properties synchronization]
+
+
         /// <summary>
         /// Synchronizes content type properties
         /// </summary>
         /// <param name="typeContentType">ContentType type</param>
         /// <param name="contentType">Umbraco content type</param>
+        /// <param name="documentTypeAttribute">The document type attribute.</param>
         /// <param name="hadDefaultValues">set to true if some of properties has default values</param>
-        protected void SynchronizeContentTypeProperties(Type typeContentType, ContentType contentType, out bool hadDefaultValues)
+        /// <param name="updateMixins">if set to <c>true</c> [update mixins].</param>
+        protected void SynchronizeContentTypeProperties(Type typeContentType, IContentType contentType, DocumentTypeAttribute documentTypeAttribute, out bool hadDefaultValues, bool updateMixins)
         {
-            var documentTypeAttribute = DocumentTypeManager.GetDocumentTypeAttribute(typeContentType);
-
             // sync the mixins first so that any properties are overwritten by the specific properties on the class
-            if (documentTypeAttribute.Mixins != null)
+            if ((documentTypeAttribute.Mixins != null) && (updateMixins == false))
             {
                 foreach (Type mixinType in documentTypeAttribute.Mixins)
                 {
-                    SynchronizeContentTypeProperties(mixinType, contentType, out hadDefaultValues);
-                    contentType.Save();
+                    SynchronizeContentTypeProperties(mixinType, contentType, documentTypeAttribute, out hadDefaultValues, true);
                 }
             }
 
@@ -118,14 +118,15 @@ namespace Vega.USiteBuilder
                     continue; // skip this property - not part of a document type
                 }
 
-                // getting name and alias
+                // Getting name and alias
                 string propertyName;
                 string propertyAlias;
                 DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
 
-                if (RemoveIfObsolete(contentType, propInfo, propertyAlias))
+                // Remove property if it has Obsolete attribute
+                if (this.RemoveIfObsolete(contentType, propInfo, propertyAlias))
                 {
-                    continue; // skip this property as it's obsolete
+                    continue;
                 }
 
                 if (propAttr.DefaultValue != null)
@@ -133,90 +134,63 @@ namespace Vega.USiteBuilder
                     hadDefaultValues = true; // at least one property has a default value
                 }
 
-                var dataTypeDefinition = GetDataTypeDefinition(typeContentType, propAttr, propInfo);
+                DataTypeDefinition dataTypeDefinition = GetDataTypeDefinition(typeContentType, propAttr, propInfo);
 
                 // getting property if already exists, or creating new if it not exists
-                PropertyType property = contentType.getPropertyType(propertyAlias);
-                if (property == null) // if not exists, create it
+                Umbraco.Core.Models.PropertyType propertyType = contentType.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
+                if (propertyType == null) // if not exists, create it
                 {
-                    //contentType.AddPropertyType(dataTypeDefinition, propertyAlias, propertyName);
-                    Util.AddPropertyType(contentType, dataTypeDefinition, propertyAlias, propertyName);
-                    property = contentType.getPropertyType(propertyAlias);
+                    Util.AddPropertyType(contentType, dataTypeDefinition, propertyAlias, propertyName, propAttr.TabAsString);
+                    propertyType = contentType.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
                 }
                 else
                 {
-                    if (property.DataTypeDefinition.Id != dataTypeDefinition.Id) // if data type definition changed
+                    if (propertyType.DataTypeDefinitionId != dataTypeDefinition.Id)
                     {
-                        property.DataTypeDefinition = dataTypeDefinition;
+                        propertyType.DataTypeDefinitionId = dataTypeDefinition.Id;
                     }
                 }
 
-                string tabName = propAttr.TabAsString;
-
-                if (string.IsNullOrEmpty(tabName))
+                // If propertyType is still null, skip it. It means it cannot be added and is probably present in a parent content type.
+                // Reason for inability to create the propertyType must be resolved manually.
+                if (propertyType != null)
                 {
-                    tabName = Util.GetAttribute<DocumentTypeAttribute>(typeContentType).DefaultTab;
-                }
-
-                // Setting up the tab of this property. If tab doesn't exists, create it.
-                if (!string.IsNullOrEmpty(tabName) && tabName.ToLower() != DocumentTypeDefaultValues.TabGenericProperties.ToLower())
-                {
-                    int tabId;
-
-                    var tab = contentType.getVirtualTabs.FirstOrDefault(t => t.Caption == tabName);
-
-                    if (tab == null)
+                    // Setting up the tab of this property. If tab doesn't exists, create it.
+                    if (!string.IsNullOrEmpty(propAttr.TabAsString) && propAttr.TabAsString.ToLower() != DocumentTypeDefaultValues.TabGenericProperties.ToLower())
                     {
-                        tabId = contentType.AddVirtualTab(tabName);
-                    }
-                    else
-                    {
-                        tabId = tab.Id;
-                        // inherited tab
-                        if (tab.ContentType != contentType.Id)
+                        // try to find this tab
+                        PropertyGroup pg = contentType.PropertyGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
+                        if (pg == null) // if found
                         {
-                            var propertyTypeGroup = contentType.PropertyTypeGroups.FirstOrDefault(t => t.Name == tabName && t.ContentTypeId == contentType.Id);
+                            contentType.AddPropertyGroup(propAttr.TabAsString);
+                            pg = contentType.PropertyGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
+                        }
 
-                            if (propertyTypeGroup == null)
-                            {
-                                // create a new inherited tab                   
-                                propertyTypeGroup = new PropertyTypeGroup(tab.Id, contentType.Id,
-                                                                              tabName);
+                        if (propAttr.TabOrder.HasValue)
+                        {
+                            pg.SortOrder = propAttr.TabOrder.Value;
+                        }
 
-                                propertyTypeGroup.Save();
-                            }
-                            tabId = propertyTypeGroup.Id;
+                        if (!pg.PropertyTypes.Any(x => x.Alias == propertyType.Alias))
+                        {
+                            contentType.MovePropertyType(propertyType.Alias, propAttr.TabAsString);
                         }
                     }
-
-
-                    if (propAttr.TabOrder.HasValue)
+                    else if ((propAttr.TabAsString == string.Empty) || (propAttr.TabAsString.ToLower() == "generic properties"))
                     {
-                        contentType.SetTabSortOrder(tabId, propAttr.TabOrder.Value);
+                        // In case when some property exists and needs to be moved to "Generic Properties" tab
+                        contentType.MovePropertyType(propertyType.Alias, null);
                     }
 
-                    property.PropertyTypeGroup = tabId;
+                    propertyType.Name = propertyName;
+                    propertyType.Mandatory = propAttr.Mandatory;
+                    propertyType.ValidationRegExp = propAttr.ValidationRegExp;
+                    propertyType.Description = propAttr.Description;
+                    propertyType.SortOrder = propertySortOrder;
+
+                    propertySortOrder++;
                 }
-                else
-                {
-                    // move to generic properties
-                    property.PropertyTypeGroup = 0;
-                }
-
-                // updating
-                property.Name = propertyName;
-                property.Mandatory = propAttr.Mandatory;
-                property.ValidationRegExp = propAttr.ValidationRegExp;
-                property.Description = propAttr.Description;
-                property.SortOrder = propertySortOrder;
-
-                property.Save();
-
-                propertySortOrder++;
-
-                // refresh document type to load tabs again
-                contentType = ContentType.GetByAlias(contentType.Alias);
-            } // foreach
+            }
         }
 
         public static DataTypeDefinition GetDataTypeDefinition(Type typeContentType, DocumentTypePropertyAttribute propAttr,
@@ -312,7 +286,7 @@ namespace Vega.USiteBuilder
         /// <param name="propInfo">Property info</param>
         /// <param name="propertyAlias">Property alias</param>
         /// <returns>True if property is obsolete and removed. False if this property is not obsolete</returns>
-        private bool RemoveIfObsolete(ContentType contentType, PropertyInfo propInfo, string propertyAlias)
+        private bool RemoveIfObsolete(IContentType contentType, PropertyInfo propInfo, string propertyAlias)
         {
             bool isObsolete = false;
 

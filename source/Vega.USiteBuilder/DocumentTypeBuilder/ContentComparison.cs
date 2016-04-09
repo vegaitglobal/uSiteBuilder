@@ -12,6 +12,7 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
         /// The alias.
         /// </value>
         public string Alias { get; set; }
+
         /// <summary>
         /// Gets or sets the document type status.
         /// </summary>
@@ -19,6 +20,7 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
         /// The document type status.
         /// </value>
         public Status DocumentTypeStatus { get; set; }
+
         /// <summary>
         /// Gets or sets the parent alias.
         /// </summary>
@@ -26,5 +28,13 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
         /// The parent alias.
         /// </value>
         public string ParentAlias { get; set; }
+
+        /// <summary>
+        /// Gets or sets the document type identifier.
+        /// </summary>
+        /// <value>
+        /// The document type identifier.
+        /// </value>
+        public int DocumentTypeId { get; set; }
     }
 }

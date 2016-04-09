@@ -47,7 +47,7 @@ namespace Vega.USiteBuilder
                 throw new Exception("Member Login Name cannot be empty");
             }
 
-            MemberType memberType = MemberTypeManager.GetMemberType(member.GetType());
+            var memberType = MemberTypeManager.GetMemberType(member.GetType());
 
             Member umember;
             if (member.Id == 0) // member is new so create Member
@@ -277,8 +277,7 @@ namespace Vega.USiteBuilder
                             }
                         }
                         else if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
-                        {                            
-                            // will be transformed later. TODO: move transformation here
+                        {
                             value = ContentHelper.PropertyConvertors[propInfo.PropertyType].ConvertValueWhenRead(value);
                         }
                         else if (propInfo.PropertyType.IsGenericType &&
@@ -299,11 +298,6 @@ namespace Vega.USiteBuilder
                         else
                         {
                             value = Convert.ChangeType(property.Value, propInfo.PropertyType);
-                        }
-
-                        if (ContentHelper.PropertyConvertors.ContainsKey(propInfo.PropertyType))
-                        {
-                            value = ContentHelper.PropertyConvertors[propInfo.PropertyType].ConvertValueWhenRead(value);
                         }
 
                         propInfo.SetValue(retVal, value, null);

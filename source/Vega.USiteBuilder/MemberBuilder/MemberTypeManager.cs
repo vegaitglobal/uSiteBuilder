@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using umbraco.cms.businesslogic;
 using umbraco.cms.businesslogic.member;
@@ -160,7 +161,7 @@ namespace Vega.USiteBuilder.MemberBuilder
             if (!USiteBuilderConfiguration.SuppressSynchronization)
             {
 
-                MemberType memberType = MemberType.GetByAlias(memberTypeAlias) ??
+                var memberType = MemberType.GetByAlias(memberTypeAlias) ??
                                         MemberType.MakeNew(siteBuilderUser, memberTypeName);
 
                 memberType.Text = memberTypeName;
@@ -192,20 +193,86 @@ namespace Vega.USiteBuilder.MemberBuilder
 
         private MemberTypeAttribute CreateDefaultMemberTypeAttribute(Type typeMemberType)
         {
-            MemberTypeAttribute retVal = new MemberTypeAttribute();
-
-            retVal.Name = typeMemberType.Name;
-            retVal.IconUrl = DocumentTypeDefaultValues.IconUrl;
-            retVal.Thumbnail = DocumentTypeDefaultValues.Thumbnail;
+            MemberTypeAttribute retVal = new MemberTypeAttribute
+            {
+                Name = typeMemberType.Name,
+                IconUrl = DocumentTypeDefaultValues.IconUrl,
+                Thumbnail = DocumentTypeDefaultValues.Thumbnail
+            };
 
             return retVal;
         }
         #endregion
 
+
         #region [Member type properties synchronization]
         private void SynchronizeMemberTypeProperties(Type typeMemberType, MemberType memberType)
         {
-            SynchronizeContentTypeProperties(typeMemberType, memberType, out _hadDefaultValues);            
+            int propertySortOrder = 0;
+            foreach (PropertyInfo propInfo in typeMemberType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                DocumentTypePropertyAttribute propAttr = Util.GetAttribute<DocumentTypePropertyAttribute>(propInfo);
+                if (propAttr == null)
+                {
+                    continue; // skip this property - not part of a document type
+                }
+
+                // getting name and alias
+                string propertyName;
+                string propertyAlias;
+                DocumentTypeManager.ReadPropertyNameAndAlias(propInfo, propAttr, out propertyName, out propertyAlias);
+
+                if (HasObsoleteAttribute(propInfo))
+                {
+                    Util.DeletePropertyType(memberType, propertyAlias);
+                    continue;
+                }
+
+                if (propAttr.DefaultValue != null)
+                {
+                    _hadDefaultValues = true; // at least one property has a default value
+                }
+
+
+                umbraco.cms.businesslogic.datatype.DataTypeDefinition dataTypeDefinition = GetDataTypeDefinition(typeMemberType, propAttr, propInfo);
+
+                // getting property if already exists, or creating new if it not exists
+                var propertyType = memberType.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
+                if (propertyType == null) // if not exists, create it
+                {
+                    memberType.AddPropertyType(dataTypeDefinition, propertyAlias, propertyName);
+                    propertyType = memberType.PropertyTypes.FirstOrDefault(p => p.Alias == propertyAlias);
+                }
+
+                //// Setting up the tab of this property. If tab doesn't exists, create it.
+                if (!string.IsNullOrEmpty(propAttr.TabAsString) && !String.Equals(propAttr.TabAsString, DocumentTypeDefaultValues.TabGenericProperties, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    // try to find this tab
+                    umbraco.cms.businesslogic.propertytype.PropertyTypeGroup pg = memberType.PropertyTypeGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
+                    if (pg == null) // if found
+                    {
+                        memberType.AddVirtualTab(propAttr.TabAsString);
+                        pg = memberType.PropertyTypeGroups.FirstOrDefault(x => x.Name == propAttr.TabAsString);
+                    }
+
+                    if (propAttr.TabOrder.HasValue)
+                    {
+                        pg.SortOrder = propAttr.TabOrder.Value;
+                    }
+
+                    propertyType.PropertyTypeGroup = pg.Id;
+                }
+
+                propertyType.Name = propertyName;
+                propertyType.Mandatory = propAttr.Mandatory;
+                propertyType.ValidationRegExp = propAttr.ValidationRegExp;
+                propertyType.Description = propAttr.Description;
+                propertyType.SortOrder = propertySortOrder;
+
+                propertyType.Save();
+
+                propertySortOrder++;
+            }
         }
         #endregion
     }

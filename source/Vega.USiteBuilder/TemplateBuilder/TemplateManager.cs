@@ -150,7 +150,7 @@ namespace Vega.USiteBuilder.TemplateBuilder
 
         public string GetParentMasterPageName(Template template)
         {
-            string masterPageContent = File.ReadAllText(template.MasterPageFile);
+            string masterPageContent = File.ReadAllText(template.TemplateFilePath);
             return GetParentMasterPageName(masterPageContent);
         }
 
