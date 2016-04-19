@@ -246,7 +246,8 @@ namespace Vega.USiteBuilder
                     {
                         if (property == null)
                         {
-                            value = null;
+                            var objVal = propInfo.GetValue(retVal, new object[]{});
+                            if (objVal != null) value = objVal;
                         }
                         else if (propInfo.PropertyType == typeof(Boolean))
                         {
