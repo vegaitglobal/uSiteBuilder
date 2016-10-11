@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Security.Cryptography;
-using System.Text;
-using umbraco.cms.businesslogic.member;
+using System.Web.Security;
 
 namespace Vega.USiteBuilder.MemberBuilder
 {
@@ -24,26 +22,14 @@ namespace Vega.USiteBuilder.MemberBuilder
         }
 
         /// <summary>
-        /// Changes the member password using password hash.
+        /// Changes the password.
         /// </summary>
-        /// <param name="newHashedPassword">The new hashed password.</param>
-        public void ChangePassword(string newHashedPassword)
+        /// <param name="oldPassword">The old password.</param>
+        /// <param name="newPassword">The new password.</param>
+        /// <param name="membershipProvider">The membership provider.</param>
+        public void ChangePassword(string oldPassword, string newPassword, MembershipProvider membershipProvider)
         {
-            var member = new Member(Id);
-
-            member.ChangePassword(newHashedPassword);
-        }
-
-        /// <summary>
-        /// Changes the member pasword using HMACSHA1 has on plain password.
-        /// </summary>
-        /// <param name="newPlainPassword">Plain password text</param>
-        public void ChangeAndHashPassword(string newPlainPassword)
-        {
-            HMACSHA1 hash = new HMACSHA1 { Key = Encoding.Unicode.GetBytes(newPlainPassword) };
-            string hashedPassword = Convert.ToBase64String(hash.ComputeHash(Encoding.Unicode.GetBytes(newPlainPassword)));
-
-            ChangePassword(hashedPassword);
+            membershipProvider.ChangePassword(LoginName, oldPassword, newPassword);
         }
 
         /// <summary>

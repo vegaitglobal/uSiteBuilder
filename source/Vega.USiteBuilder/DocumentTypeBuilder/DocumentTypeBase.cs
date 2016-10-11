@@ -2,6 +2,7 @@
 using System.Linq;
 using umbraco.BusinessLogic;
 using umbraco.MacroEngines;
+using Umbraco.Core.Models.Membership;
 
 namespace Vega.USiteBuilder.DocumentTypeBuilder
 {
@@ -134,7 +135,7 @@ namespace Vega.USiteBuilder.DocumentTypeBuilder
         /// </summary>
         /// <param name="user">User used for add or updating the content</param>
         /// <param name="publish">If set to <c>true</c> it contentItem will be published as well.</param>
-        public void Save(User user, bool publish)
+        public void Save(IUser user, bool publish)
         {
             ContentHelper.Save(this, user.Id, publish);
         }
